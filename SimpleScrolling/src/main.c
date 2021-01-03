@@ -40,7 +40,18 @@ void handleInput() {
 	if( value & BUTTON_UP ) {
 		// pushing UP on the joypad applies motion delta to the map position.
 		mapPosX = fix32Add( mapPosX, deltaX[rotationIndex] );
+		if( mapPosX < FIX32(0) ) {
+		    mapPosX  = FIX32(0);
+		}else if( mapPosX > FIX32(6079) ) { // full width of map image.
+				mapPosX = FIX32(6079);
+		}
 		mapPosY = fix32Add( mapPosY, deltaY[rotationIndex] );
+		if( mapPosY < FIX32(0) ) {
+		    mapPosY  = FIX32(0);
+		}else if( mapPosY > FIX32(2239) ) {  // this seems to be as far as I cna go without corrupting the map
+				mapPosY = FIX32(2239);
+		}
+
 	}
 }
 
@@ -57,8 +68,8 @@ int main( u16 hard ) {
 	// init plane
 	Map *map_a = MAP_create( &plane_a_map, BG_A, TILE_ATTR_FULL( PAL1, FALSE, FALSE, FALSE, ind ) );
 	// set initial map position
-	mapPosX = FIX32( 1440.0 );
-	mapPosY = FIX32( 1008.0 );
+	mapPosX = FIX32(1440);
+	mapPosY = FIX32(1120);
 
 	MAP_scrollTo( map_a, fix32ToInt(mapPosX), fix32ToInt(mapPosY ) );
 	
