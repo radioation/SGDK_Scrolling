@@ -130,10 +130,10 @@ int main(u16 hard)
 	int count = 0;
 	while (TRUE)
 	{
-		s16 sPlaneOffsetA = scrollPlane(BG_A, bg_image_a.tilemap, indexA, FIX32(1.2), &offsetA, &imageOffsetA, &lastSrcColA, &lastDstColA);
+		s16 sPlaneOffsetA = scrollPlane(BG_A, bg_image_a.tilemap, indexA, FIX32(4.5), &offsetA, &imageOffsetA, &lastSrcColA, &lastDstColA);
 		KLog_S2("count: ", count, " offset: ", sPlaneOffsetA);
 		KLog_F1("        offsetA: ", offsetA);
-		s16 sPlaneOffsetB = scrollPlane(BG_B, bg_image_b.tilemap, indexB, FIX32(0.8), &offsetB, &imageOffsetB, &lastSrcColB,  &lastDstColB);
+		s16 sPlaneOffsetB = scrollPlane(BG_B, bg_image_b.tilemap, indexB, FIX32(0.05), &offsetB, &imageOffsetB, &lastSrcColB,  &lastDstColB);
 
 		VDP_setHorizontalScroll(BG_A, -sPlaneOffsetA); // negative moves plane to left, positive to right
 		VDP_setHorizontalScroll(BG_B, -sPlaneOffsetB);

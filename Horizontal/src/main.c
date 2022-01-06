@@ -9,157 +9,200 @@
 #define IMAGE_MAX_PIXEL 1280
 #define IMAGE_MAX_TILE 160
 
-fix32 offsetA = FIX32(0);
-fix32 imageOffsetA = FIX32(0);
-u16 lastSrcColA = -1;
-u16 lastDstColA = -1;
+//
+// 0-2 don't scroll.  no need
+// 3-4  fastest cloud										<<<<<< START BG_B
+// 5
+// 6
+// 7-8 slowest cloud                     <<<<<<  START BG_A  (21 rows for A)
+// 9-11 the distance.  slowest of all
+// 12-13 slowest land
+// 14                                    <<<<<<   END BG_B  (15 rows vor B)
+// 15
+// 16
+// 17-19
+// 20-27 fastest gorund									<<<<<<< END BG_A
+#define ROWS_A 21
+#define START_ROW_A 7
+fix32 speedA[ROWS_A];
+fix32 planeOffsetA[ROWS_A];
+fix32 imageOffsetA[ROWS_A];
+u16 lastSrcColA[ROWS_A];
+u16 lastDstColA[ROWS_A];
+s16 scrollA[ROWS_A];
 
-fix32 offsetB = FIX32(0);
-fix32 imageOffsetB = FIX32(0);
-u16 lastSrcColB = -1;
-u16 lastDstColB = -1;
+#define ROWS_B 12
+#define START_ROW_B 3
+fix32 speedB[ROWS_B];
+fix32 planeOffsetB[ROWS_B];
+fix32 imageOffsetB[ROWS_B];
+u16 lastSrcColB[ROWS_B];
+u16 lastDstColB[ROWS_B];
+s16 scrollB[ROWS_B];
 
-s16 scrollPlane(VDPPlane plane, const TileMap *tilemap, int index, fix32 speed, fix32 *planeOffset, fix32 *imageOffset, u16 *lastSrcCol, u16 *lastDstCol)
+void updateTiles(VDPPlane plane, const TileMap *tilemap, int index,
+								 fix32 *speed,
+								 fix32 *planeOffset,
+								 fix32 *imageOffset,
+								 u16 *lastSrcCol,
+								 u16 *lastDstCol,
+								 s16 *scroll,
+								 u16 startRow,
+								 u16 rows)
 {
-	// Set the scrolling position
-	*planeOffset = fix32Add(*planeOffset, speed);
-	if (*planeOffset >= FIX32(PLANE_MAX_PIXEL))
-		*planeOffset = FIX32(0); // plane in memory is 512 pixels wide
-	*imageOffset = fix32Add(*imageOffset, speed);
-	if (*imageOffset >= FIX32(IMAGE_MAX_PIXEL))
-		*imageOffset = FIX32(0); // bg image is 1280 pixels wide
-	s16 sPlaneOffset = fix32ToInt(*planeOffset);
-	// check if we need a new tile
-	if (sPlaneOffset % 8 == 0)
+
+	for (s16 row = 0; row < rows; ++row)
 	{
-		// get destination column (in tiles)
-		s16 dstCol = (sPlaneOffset + 504) / 8;
-		if (dstCol >= PLANE_MAX_TILE)
+		// Set the scrolling position of plane per row
+		planeOffset[row] = fix32Add(planeOffset[row], speed[row]);
+		if (planeOffset[row] >= FIX32(PLANE_MAX_PIXEL)) // plane in memory is 512 pixels wide
 		{
-			dstCol -= PLANE_MAX_TILE; // wrap around to the start of the plane
+			planeOffset[row] = FIX32(0); 
 		}
 
-		// get source column (in tiles)
-		s16 sImageOffsetA = fix32ToInt(*imageOffset);
-		s16 srcCol = (sImageOffsetA + PLANE_MAX_PIXEL) / 8;
-		if (srcCol >= IMAGE_MAX_TILE)
+		// keep track of where we are in the image per row
+		imageOffset[row] = fix32Add(imageOffset[row], speed[row]);
+		if (imageOffset[row] >= FIX32(IMAGE_MAX_PIXEL)) // bg image is 1280 pixels wide
 		{
-			srcCol -= IMAGE_MAX_TILE; // wrap around to the start of the image
+			imageOffset[row] = FIX32(0); 
 		}
-		// if the current destination column is smaller than
-		// the last one, the region is *not* continuous.
-		// Two or more tile moves may be required.
-		if (dstCol < *lastDstCol)
+		s16 sPlaneOffset = fix32ToInt(planeOffset[row]);
+		// check if we need a new tile
+		if (sPlaneOffset % 8 == 0)
 		{
-			// from lastDst to end of the plane
-			int width1 = PLANE_MAX_TILE - *lastDstCol - 1;
-			int width2 = dstCol + 1;
-			if (srcCol > *lastSrcCol)
+			// get destination column (in tiles)
+			s16 dstCol = (sPlaneOffset + PLANE_MAX_PIXEL - 8) / 8;
+			if (dstCol >= PLANE_MAX_TILE)
 			{
-				// copy first half
-				VDP_setTileMapEx(plane, tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, index),
-												 *lastDstCol + 1, // Plane X destination
-												 0,							 // plane Y destination
-												 *lastSrcCol + 1, // Region X start position
-												 0,							 // Region Y start position
-												 width1,				 // width  ( will this wrap? )
-												 28,						 // height
-												 CPU);
-				// copy second half
-				VDP_setTileMapEx(plane, tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, index),
-												 0,												// Plane X destination
-												 0,												// plane Y destination
-												 *lastSrcCol + 1 + width1, // Region X start position
-												 0,												// Region Y start position
-												 width2,									// width  ( will this wrap? )
-												 28,											// height
-												 CPU);
+				dstCol -= PLANE_MAX_TILE; // wrap around to the start of the plane
 			}
-			else
-			{
-				// just loop for now ( probably inefficient if there are a lot of columns to copy)
-				s16 totalWidth = width1 + width2;
-				s16 tmpDst = *lastDstCol + 1;
-				s16 tmpSrc = *lastSrcCol + 1;
-				for (s16 i = 0; i < totalWidth; ++i)
-				{
-					VDP_setTileMapEx(plane, tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, index),
-													 tmpDst, // Plane X destination
-													 0,			 // plane Y destination
-													 tmpSrc, // Region X start position
-													 0,			 // Region Y start position
-													 width2, // width  ( will this wrap? )
-													 28,		 // height
-													 CPU);
 
-					tmpDst++;
-					if (tmpDst >= PLANE_MAX_PIXEL)
+			// get source column (in tiles)
+			s16 sImageOffset = fix32ToInt(imageOffset[row]);
+			s16 srcCol = (sImageOffset + PLANE_MAX_PIXEL - 8) / 8;
+			if (srcCol >= IMAGE_MAX_TILE)
+			{
+				srcCol -= IMAGE_MAX_TILE; // wrap around to the start of the image
+			}
+			// if the current destination column is smaller n
+			// the last one, the region is *notnuous
+			// Two or more tile moves may be required.
+			if (dstCol != lastDstCol[row])
+			{
+				s16 width = dstCol - lastDstCol[row];
+				if (width < 0)
+				{
+					width += PLANE_MAX_TILE;
+				}
+				// just loop for now ( probably inefficient if there are a lot of columns to copy)
+				s16 tmpDst = lastDstCol[row] + 1;
+				s16 tmpSrc = lastSrcCol[row] + 1;
+				for (s16 i = 0; i < width; ++i)
+				{
+					if (tmpDst >= PLANE_MAX_TILE)
 					{
 						tmpDst = 0;
 					}
-					tmpSrc++;
-					if (tmpSrc >= IMAGE_MAX_PIXEL)
+					if (tmpSrc >= IMAGE_MAX_TILE)
 					{
 						tmpSrc = 0;
 					}
+					VDP_setTileMapEx(plane, tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, index),
+													 tmpDst,				 // Plane X destination
+													 startRow + row, // plane Y destination
+													 tmpSrc,				 // Region X start position
+													 startRow + row, // Region Y start position
+													 1,							 // width
+													 1,							 // height
+													 CPU);
+					tmpDst++;
+					tmpSrc++;
 				}
+				lastDstCol[row] = tmpDst - 1;
+				lastSrcCol[row] = tmpSrc - 1;
 			}
 		}
-		else if (dstCol > *lastDstCol)
-		{
-			//
-			int width = dstCol - *lastDstCol;
-			if (*lastSrcCol + width < IMAGE_MAX_TILE)
-			{
-				// we're not blowing past
-				VDP_setTileMapEx(plane, tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, index),
-												 *lastDstCol + 1, // Plane X destination
-												 0,							 // plane Y destination
-												 *lastSrcCol + 1, // Region X start position
-												 0,							 // Region Y start position
-												 width,					 // width
-												 28,						 // height
-												 CPU);
-			}
-			else
-			{
-				//  blowing past the end, need two copies
-				s16 width1 = IMAGE_MAX_TILE - *lastSrcCol - 1;
-				s16 width2 = width - width1;
-				VDP_setTileMapEx(plane, tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, index),
-												 *lastDstCol + 1, // Plane X destination
-												 0,							 // plane Y destination
-												 *lastSrcCol + 1, // Region X start position
-												 0,							 // Region Y start position
-												 width1,				 // width
-												 28,						 // height
-												 CPU);
-
-				VDP_setTileMapEx(plane, tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, index),
-												 *lastDstCol + 1 + width1, // Plane X destination
-												 0,												// plane Y destination
-												 0,												// Region X start position
-												 0,												// Region Y start position
-												 width2,									// width
-												 28,											// height
-												 CPU);
-			}
-		}
-		*lastDstCol = dstCol;
-		*lastSrcCol = srcCol;
+		scroll[row] = -sPlaneOffset;
 	}
-	return sPlaneOffset;
+}
+
+void setupA()
+{
+	// setup scrolling vals
+	for (int row = 0; row < ROWS_A; ++row)
+	{
+		planeOffsetA[row] = FIX32(0);
+		imageOffsetA[row] = FIX32(0);
+		lastSrcColA[row] = PLANE_MAX_TILE - 1;
+		lastDstColA[row] = PLANE_MAX_TILE - 1;
+		scrollA[row] = 0;
+	}
+	// 7-15 are 2nd slowest land value
+	for (int row = 7; row <= 16; ++row)
+	{
+		speedA[row - START_ROW_A] = FIX32(2.2);
+	}
+	// 17-19
+	for (int row = 17; row <= 19; ++row)
+	{
+		speedA[row - START_ROW_A] = FIX32(3.5);
+	}
+	// 20-27 fastest ground
+	for (int row = 20; row < 23; ++row)
+	{
+		speedA[row - START_ROW_A] = FIX32(4.7);
+	}
+	for (int row = 23; row <= 27; ++row)
+	{
+		speedA[row - START_ROW_A] = FIX32(7.6);
+	}
+}
+
+void setupB()
+{
+	// setup scrolling vals
+	for (int row = 0; row < ROWS_B; ++row)
+	{
+		planeOffsetB[row] = FIX32(0);
+		imageOffsetB[row] = FIX32(0);
+		lastSrcColB[row] = PLANE_MAX_TILE - 1;
+		lastDstColB[row] = PLANE_MAX_TILE - 1;
+		scrollB[row] = 0;
+	}
+	// 3-4 fastest cloud
+	speedB[0] = FIX32(6);
+	speedB[1] = FIX32(6);
+	// 5
+	speedB[2] = FIX32(3);
+	// 6
+	speedB[3] = FIX32(1.5);
+	// 7-8 slowest cloud
+	speedB[4] = FIX32(0.75);
+	speedB[5] = FIX32(0.75);
+	// 9-11 the distances
+	speedB[6] = FIX32(0.075);
+	speedB[7] = FIX32(0.075);
+	speedB[8] = FIX32(0.075);
+	// 12-13 slow land
+	speedB[9] = FIX32(0.5);
+	speedB[10] = FIX32(1.0);
+	// 14
+	speedB[11] = FIX32(1.5);
 }
 
 int main(u16 hard)
 {
+	//setup values
+	setupA();
+	setupB();
 
+	// set color palette 0
 	VDP_setPalette(PAL0, bg_image_b.palette->data);
 
-	// set scrolling mode.  Affects the WHOLE plane
-	VDP_setScrollingMode(HSCROLL_PLANE, VSCROLL_PLANE);
+	// set scrolling mode to TILE for horizontal.
+	VDP_setScrollingMode(HSCROLL_TILE, VSCROLL_PLANE);
 
-	// get our position in VRAM.
+	// get tile positions in VRAM.
 	int ind = TILE_USERINDEX;
 	int indexA = ind;
 	// Load the plane tiles into VRAM
@@ -169,15 +212,13 @@ int main(u16 hard)
 
 	// put out the image
 	VDP_setTileMapEx(BG_A, bg_image_a.tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, indexA),
-									 0,								// Plane X destination
-									 0,								// plane Y destination
-									 0,								// Region X start position
-									 0,								// Region Y start position
+									 0,							 // Plane X destination
+									 0,							 // plane Y destination
+									 0,							 // Region X start position
+									 0,							 // Region Y start position
 									 PLANE_MAX_TILE, // width  (went with 64 becasue default width is 64.  Viewable screen is 40)
-									 28,							// height
+									 28,						 // height
 									 CPU);
-	lastDstColA = PLANE_MAX_TILE - 1;
-	lastSrcColA = PLANE_MAX_TILE - 1;
 	VDP_setTileMapEx(BG_B, bg_image_b.tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, indexB),
 									 0,
 									 0,
@@ -186,18 +227,30 @@ int main(u16 hard)
 									 PLANE_MAX_TILE,
 									 28,
 									 CPU);
-	lastDstColB = PLANE_MAX_TILE - 1;
-	lastSrcColB = PLANE_MAX_TILE - 1;
 
 	while (TRUE)
 	{
+		updateTiles(BG_A, bg_image_a.tilemap, indexA,
+								speedA,
+								planeOffsetA,
+								imageOffsetA,
+								lastSrcColA,
+								lastDstColA,
+								scrollA,
+								START_ROW_A,
+								ROWS_A);
+		VDP_setHorizontalScrollTile(BG_A, START_ROW_A, scrollA, ROWS_A, CPU);
 
-		s16 sPlaneOffsetA = scrollPlane(BG_A, bg_image_a.tilemap, indexA, FIX32(1.2), &offsetA, &imageOffsetA, &lastSrcColA,  &lastDstColA);
-		s16 sPlaneOffsetB = scrollPlane(BG_B, bg_image_b.tilemap, indexB, FIX32(0.8), &offsetB, &imageOffsetB, &lastSrcColB,  &lastDstColB);
-
-		VDP_setHorizontalScroll(BG_A, -sPlaneOffsetA); // negative moves plane to left, positive to right
-		VDP_setHorizontalScroll(BG_B, -sPlaneOffsetB);
-
+		updateTiles(BG_B, bg_image_b.tilemap, indexB,
+								speedB,
+								planeOffsetB,
+								imageOffsetB,
+								lastSrcColB,
+								lastDstColB,
+								scrollB,
+								START_ROW_B,
+								ROWS_B);
+		VDP_setHorizontalScrollTile(BG_B, START_ROW_B, scrollB, ROWS_B, CPU);
 		// let SGDK do its thing
 		SYS_doVBlankProcess();
 	}
