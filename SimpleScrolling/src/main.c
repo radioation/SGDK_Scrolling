@@ -55,13 +55,13 @@ void handleInput() {
 	}
 }
 
-int main( u16 hard ) {
+int main( bool hard ) {
 	
-  VDP_setPalette( PAL1, plane_a_map.palette->data);
-  VDP_setPalette( PAL2, ship.palette->data );
+  PAL_setPalette( PAL1, plane_palette.data, CPU);
+  PAL_setPalette( PAL2, ship_pal.data, CPU );
 
 	// get our position in VRAM.
-	int ind = TILE_USERINDEX; 
+	int ind = TILE_USER_INDEX; 
 	// Load the plane tiles into VRAM
 	VDP_loadTileSet( &plane_a_tileset, ind, DMA );
 
