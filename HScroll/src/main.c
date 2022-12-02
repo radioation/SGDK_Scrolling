@@ -5,20 +5,23 @@
 s16 offset = 0;
 s16 imageOffset = 0;
 
-int main( u16 hard ) {
-	
-  VDP_setPalette( PAL0, bg_image.palette->data);
+int main( bool hard ) {
+
+     
+
+  //PAL_setPalette( PAL1, palette_all.data, DMA);
+  PAL_setPalette( PAL1, bg_palette.data, DMA);
 
 	// set scrolling mode.  HSCROLL_PLANE Affects the WHOLE plane
 	VDP_setScrollingMode( HSCROLL_PLANE, VSCROLL_PLANE);
 
 	// get our position in VRAM.
-	int ind = TILE_USERINDEX; 
+	int ind = TILE_USER_INDEX; 
 	// Load the plane tiles into VRAM at our position
 	VDP_loadTileSet( bg_image.tileset, ind, DMA );
 
 	// put out the image
-	VDP_setTileMapEx(BG_A, bg_image.tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind),
+	VDP_setTileMapEx(BG_A, bg_image.tilemap, TILE_ATTR_FULL(PAL1, FALSE, FALSE, FALSE, ind),
 									 0,			// Plane X destination
 									 0,			// plane Y destination
 									 0, 		// Region X start position
@@ -54,7 +57,7 @@ int main( u16 hard ) {
 			}
 
 			KLog_S2("dstCol: ", dstCol, "srcCol: ", srcCol);
-			VDP_setTileMapEx(BG_A, bg_image.tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind),
+			VDP_setTileMapEx(BG_A, bg_image.tilemap, TILE_ATTR_FULL(PAL1, FALSE, FALSE, FALSE, ind),
 											 dstCol, // Plane X destination
 											 0,			 // plane Y destination
 											 srcCol, // Region X start position
