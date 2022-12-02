@@ -190,20 +190,20 @@ void setupB()
 	speedB[11] = FIX32(1.5);
 }
 
-int main(u16 hard)
+int main(bool hard)
 {
 	//setup values
 	setupA();
 	setupB();
 
 	// set color palette 0
-	VDP_setPalette(PAL0, bg_image_b.palette->data);
+	PAL_setPalette(PAL0, bg_palette_a.data, CPU);
 
 	// set scrolling mode to TILE for horizontal.
 	VDP_setScrollingMode(HSCROLL_TILE, VSCROLL_PLANE);
 
 	// get tile positions in VRAM.
-	int ind = TILE_USERINDEX;
+	int ind = TILE_USER_INDEX;
 	int indexA = ind;
 	// Load the plane tiles into VRAM
 	VDP_loadTileSet(bg_image_a.tileset, ind, DMA);

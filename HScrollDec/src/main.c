@@ -90,16 +90,16 @@ s16 scrollPlane(VDPPlane plane, const TileMap *tilemap, int index, fix32 speed, 
 	return sPlaneOffset;
 }
 
-int main(u16 hard)
+int main(bool hard)
 {
 
-	VDP_setPalette(PAL0, bg_image_b.palette->data);
+	PAL_setPalette(PAL0, bg_palette_a.data, CPU);
 
 	// set scrolling mode.  Affects the WHOLE plane
 	VDP_setScrollingMode(HSCROLL_PLANE, VSCROLL_PLANE);
 
 	// get our position in VRAM.
-	int ind = TILE_USERINDEX;
+	int ind = TILE_USER_INDEX;
 	int indexA = ind;
 	// Load the plane tiles into VRAM
 	VDP_loadTileSet(bg_image_a.tileset, ind, DMA);
