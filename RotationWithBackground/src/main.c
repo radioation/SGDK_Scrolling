@@ -44,12 +44,12 @@ fix32 planeOffsetB[ROWS_B];
 fix32 imageOffsetB[ROWS_B];
 u16 lastSrcColB[ROWS_B];
 u16 lastDstColB[ROWS_B];
-s16 scrollB[ROWS_B];
+s16 hScrollB[ROWS_B*8];
 
 
 
 
-void updateTiles(VDPPlane plane, const TileMap *tilemap, int index,
+void updateScroll(VDPPlane plane, const TileMap *tilemap, int index,
 								 fix32 *speed,
 								 fix32 *planeOffset,
 								 fix32 *imageOffset,
@@ -131,7 +131,10 @@ void updateTiles(VDPPlane plane, const TileMap *tilemap, int index,
 				lastSrcCol[row] = tmpSrc - 1;
 			}
 		}
-		scroll[row] = -sPlaneOffset;
+		for( int i=0; i < 8; ++i ) {
+			scroll[row*8 + i] = -sPlaneOffset;
+		}
+	
 	}
 }
 
@@ -146,7 +149,7 @@ void setupB()
 		imageOffsetB[row] = FIX32(0);
 		lastSrcColB[row] = PLANE_MAX_TILE - 1;
 		lastDstColB[row] = PLANE_MAX_TILE - 1;
-		scrollB[row] = 0;
+		hScrollB[row] = 0;
 	}
 	// 3-4 fastest cloud
 	speedB[0] = FIX32(6);
@@ -199,7 +202,7 @@ int main(bool hard)
 	setupB();
 
 	// set scrolling mode to TILE for horizontal.
-	VDP_setScrollingMode(HSCROLL_TILE, VSCROLL_PLANE);
+	VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_2TILE);
 
 	// get tile positions in VRAM.
 	int ind = TILE_USER_INDEX;
@@ -303,16 +306,16 @@ int main(bool hard)
 
 		VDP_setHorizontalScrollTile(BG_A, START_ROW_A, scrollA, ROWS_A, CPU);
 
-		updateTiles(BG_B, bg.tilemap, indexB,
+		updateScroll(BG_B, bg.tilemap, indexB,
 								speedB,
 								planeOffsetB,
 								imageOffsetB,
 								lastSrcColB,
 								lastDstColB,
-								scrollB,
+								hScrollB,
 								START_ROW_B,
 								ROWS_B);
-		VDP_setHorizontalScrollTile(BG_B, START_ROW_B, scrollB, ROWS_B, CPU);
+		VDP_setHorizontalScrollLine(BG_B, START_ROW_B*8, hScrollB, ROWS_B*8, CPU);
 
 		SPR_update();
 
