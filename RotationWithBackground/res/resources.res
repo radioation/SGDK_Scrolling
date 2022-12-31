@@ -7,7 +7,6 @@ SPRITE gun_bike_rider_big "sprites/gun_bike_rider_b.png" 7 7 NONE  0 NONE TILE
 
 SPRITE tree "sprites/tree1.png" 3 9 NONE
 
-
 PALETTE bg_pal "planes/background.png" 
 PALETTE gun_bike_pal "sprites/gun_bike_b.png" 
 PALETTE gun_bike_rider_pal "sprites/gun_bike_rider_b.png" 

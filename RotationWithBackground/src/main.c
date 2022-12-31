@@ -15,27 +15,13 @@
 #define IMAGE_MAX_PIXEL 1280
 #define IMAGE_MAX_TILE 160
 
-//
-// 0-2 don't scroll.  no need
-// 3-4  fastest cloud										<<<<<< START BG_B
-// 5
-// 6
-// 7-8 slowest cloud                     
-// 9-11 the distance.  slowest of all
-// 12-13 slowest land
-// 14                                    <<<<<<   END BG_B  (15 rows vor B)
-// 15
-// 16
-// 17-19                                <<<< BGA
-// 20-27 fastest gorund									<<<<<<< END BG_B
-#define ROWS_A 3  
-#define START_ROW_A 17
-fix32 speedA[ROWS_A];
-fix32 planeOffsetA[ROWS_A];
-fix32 imageOffsetA[ROWS_A];
-u16 lastSrcColA[ROWS_A];
-u16 lastDstColA[ROWS_A];
-s16 scrollA[ROWS_A];
+#define ROWS_A 200
+#define START_ROW_A 24
+#define COLS_A 20
+#define START_COL_A 0
+s16 hScrollA[224];
+s16 vScrollA[20];
+
 
 #define ROWS_B 25
 #define START_ROW_B 3
@@ -46,9 +32,36 @@ u16 lastSrcColB[ROWS_B];
 u16 lastDstColB[ROWS_B];
 s16 hScrollB[ROWS_B*8];
 
+// setup fake rotation by changing the foreground horizontal and vertical scrolling
+void setAngle( u16 angle, int centerY ) {
+	// angle is defined as [0..1024] mapped to [0..2PI] range.  
+	// negative rotation will be 1024 down to 512
+	// each value is ~ 0.35 degrees / 0.0061 radians.
+	//KLog_F2x( 4, "c: ", cosFix32(angle), " s: ", sinFix32(angle));
+	
+	 for( int row = START_ROW_A; row < START_ROW_A + ROWS_A; ++row ){
+	 	fix32 shift = fix32Mul(FIX32( (row - centerY) ), sinFix32(angle));	
+	 //	KLog_S2( "  row: ", row, " off: ", (row - centerY));
+		//KLog_F1x( 4, "     shift: ", shift );
+		hScrollA[row] = fix32ToInt( shift ) - 24;
+	 } 
 
 
 
+	// vertical scroll tiles are 16 pixels wide.  Using 8 * (col-10) to scale the scrolling effect
+	// at the extreme left and right of the screen  the factor would be -80 and + 80
+	for( int col = START_COL_A; col < START_COL_A + COLS_A; ++col ){
+		fix32 shift = fix32Mul(FIX32(  16 * (col - 10) ), sinFix32(angle));	
+		vScrollA[col] = fix32ToInt( shift );
+	} 
+
+
+}
+
+
+
+
+// handle horizontal parallax scrolling of background image.
 void updateScroll(VDPPlane plane, const TileMap *tilemap, int index,
 								 fix32 *speed,
 								 fix32 *planeOffset,
@@ -189,6 +202,29 @@ void setupB()
 	}
 }
 
+
+/////////////////////////////////////////////////////////////////////
+// Joypad Handler
+u16 maxAngle = 10;
+static void readJoypad( u16 joypadId ) {
+  u16 joypadState = JOY_readJoypad( joypadId );
+	 if( joypadState & BUTTON_A ) {
+	 	maxAngle = 5;
+	 }else if( joypadState & BUTTON_B ) {
+	 	maxAngle = 10;
+	 }else if( joypadState & BUTTON_C ) {
+	 	maxAngle = 15;
+	 }else if( joypadState & BUTTON_X ) {
+	 	maxAngle = 20;
+	 }else if( joypadState & BUTTON_Y ) {
+	 	maxAngle = 30;
+	 }else if( joypadState & BUTTON_Z ) {
+	 	maxAngle = 40;
+	 }
+}
+
+
+
 int main(bool hard)
 {
   VDP_setScreenWidth320();
@@ -297,25 +333,71 @@ int main(bool hard)
 				FALSE         // flip the sprite horizontally
 				));
 
+
+
+	u16 currAngle = 0;
+	setAngle(currAngle, 150);
+	int stepDir = 1;
+	int rotationDelay = 0;
 	while (TRUE)
 	{
+		// read joypad to set max angle dynamically
+		readJoypad(JOY_1);
 
+		// sprite
 		treePosX = fix32Sub(treePosX, FIX32(2.2));
 		SPR_setPosition(treeSprite, fix32ToInt(treePosX), 54);
 
+		// Fake rotation
+		if (rotationDelay == 0)
+		{
+			currAngle += stepDir;
+			if (stepDir == 1 && currAngle < 512)
+			{
+				if (currAngle > maxAngle)
+				{
+					stepDir = -1;
+				}
+			}
+			else if (stepDir == -1 && currAngle == 0)
+			{
+				currAngle = 1024;
+			}
+			else if (stepDir == -1 && currAngle > 512)
+			{
+				if (currAngle < 1024 - maxAngle)
+				{
+					stepDir = 1;
+				}
+			}
+			else if (stepDir == 1 && currAngle > 1024)
+			{
+				currAngle = 0;
+			}
+			setAngle(currAngle, 130);
+		}
+		/*
+		++rotationDelay;
+		if( rotationDelay > 3 ) {
+			rotationDelay = 0;
+		}
+		*/
 
-		VDP_setHorizontalScrollTile(BG_A, START_ROW_A, scrollA, ROWS_A, CPU);
+		// set scrolling to fake the rotaiton.
+		VDP_setHorizontalScrollLine(BG_A, START_ROW_A, hScrollA, ROWS_A, DMA);
+		VDP_setVerticalScrollTile(BG_A, START_COL_A, vScrollA, COLS_A, DMA);
 
+		// parallax scrolling.
 		updateScroll(BG_B, bg.tilemap, indexB,
-								speedB,
-								planeOffsetB,
-								imageOffsetB,
-								lastSrcColB,
-								lastDstColB,
-								hScrollB,
-								START_ROW_B,
-								ROWS_B);
-		VDP_setHorizontalScrollLine(BG_B, START_ROW_B*8, hScrollB, ROWS_B*8, CPU);
+								 speedB,
+								 planeOffsetB,
+								 imageOffsetB,
+								 lastSrcColB,
+								 lastDstColB,
+								 hScrollB,
+								 START_ROW_B,
+								 ROWS_B);
+		VDP_setHorizontalScrollLine(BG_B, START_ROW_B * 8, hScrollB, ROWS_B * 8, DMA);
 
 		SPR_update();
 
