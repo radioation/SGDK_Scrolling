@@ -2,6 +2,25 @@
 #include "resources.h"
 
 
+/////////////////////////////////////////////////////////////////////
+// Joypad Handler
+u16 maxAngle = 5;
+static void readJoypad( u16 joypadId ) {
+  u16 joypadState = JOY_readJoypad( joypadId );
+	 if( joypadState & BUTTON_A ) {
+	 	maxAngle = 5;
+	 }else if( joypadState & BUTTON_B ) {
+	 	maxAngle = 10;
+	 }else if( joypadState & BUTTON_C ) {
+	 	maxAngle = 15;
+	 }else if( joypadState & BUTTON_X ) {
+	 	maxAngle = 20;
+	 }else if( joypadState & BUTTON_Y ) {
+	 	maxAngle = 30;
+	 }else if( joypadState & BUTTON_Z ) {
+	 	maxAngle = 40;
+	 }
+}
 
 
 /////////////////////////////////////////////////////////////////////
@@ -30,7 +49,7 @@ void setAngle( u16 angle, int centerY ) {
 	 	fix32 shift = fix32Mul(FIX32( (row - centerY) ), sinFix32(angle));	
 	 //	KLog_S2( "  row: ", row, " off: ", (row - centerY));
 		//KLog_F1x( 4, "     shift: ", shift );
-		hScrollA[row] = fix32ToInt( shift );
+		hScrollA[row] = fix32ToInt( shift ) - 24;
 	 } 
 
 
@@ -76,19 +95,19 @@ int main(bool hard)
 
 
 
-	u16 maxAngle = 40;
 	u16 currAngle = 0;
 	setAngle(currAngle, 150);
 	int stepDir = 1;
 	while (TRUE)
 	{
+		// read joypad to set max angle dynamically
+		readJoypad(JOY_1);
 
 
-		setAngle(currAngle, 130);
-	
+		// handle rotation
 		currAngle += stepDir;
 		if( stepDir ==1 && currAngle <512 ) {
-			if( currAngle > 40) {
+			if( currAngle > maxAngle) {
 				stepDir = -1;
 			}
 		} else if ( stepDir == -1 && currAngle == 0 ) {
@@ -100,10 +119,11 @@ int main(bool hard)
 		} else if ( stepDir == 1 && currAngle > 1024 ) {
 			currAngle =0;
 		}
+		setAngle(currAngle, 130);
 
 
 
-
+		// set scrolling to fake the rotaiton.
 		VDP_setHorizontalScrollLine(BG_A, START_ROW_A, hScrollA, ROWS_A, DMA);
 		VDP_setVerticalScrollTile(BG_A, START_COL_A, vScrollA, COLS_A, DMA);
 
