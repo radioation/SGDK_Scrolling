@@ -37,21 +37,21 @@ void setAngle( u16 angle, int centerY ) {
 	// angle is defined as [0..1024] mapped to [0..2PI] range.  
 	// negative rotation will be 1024 down to 512
 	// each value is ~ 0.35 degrees / 0.0061 radians.
-	//KLog_F2x( 4, "c: ", cosFix32(angle), " s: ", sinFix32(angle));
+	KLog_S1("angle:",angle);
+	KLog_F2x( 4, "   c: ", cosFix32(angle), " s: ", sinFix32(angle));
 	
 	 for( int row = START_ROW_A; row < START_ROW_A + ROWS_A; ++row ){
-	 	fix32 shift = fix32Mul(FIX32( (row - centerY) ), sinFix32(angle));	
+	 	fix32 shift = fix32Mul(FIX32( (row - centerY)/2 ), sinFix32(angle));	
 	 //	KLog_S2( "  row: ", row, " off: ", (row - centerY));
 		//KLog_F1x( 4, "     shift: ", shift );
 		hScrollA[row] = fix32ToInt( shift ) - 24;
 	 } 
 
 
-
 	// vertical scroll tiles are 16 pixels wide.  Using 8 * (col-10) to scale the scrolling effect
 	// at the extreme left and right of the screen  the factor would be -80 and + 80
 	for( int col = START_COL_A; col < START_COL_A + COLS_A; ++col ){
-		fix32 shift = fix32Mul(FIX32(  16 * (col - 10) ), sinFix32(angle));	
+		fix32 shift = fix32Mul(FIX32(  8 * (col - 9) ), sinFix32(angle));	
 		vScrollA[col] = fix32ToInt( shift );
 	} 
 
@@ -144,6 +144,7 @@ void updateScroll(VDPPlane plane, const TileMap *tilemap, int index,
 				lastSrcCol[row] = tmpSrc - 1;
 			}
 		}
+		// set offset through all 8 lines for the current "tile"
 		for( int i=0; i < 8; ++i ) {
 			scroll[row*8 + i] = -sPlaneOffset;
 		}
@@ -205,11 +206,11 @@ void setupB()
 
 /////////////////////////////////////////////////////////////////////
 // Joypad Handler
-u16 maxAngle = 10;
+u16 maxAngle = 7;
 static void readJoypad( u16 joypadId ) {
   u16 joypadState = JOY_readJoypad( joypadId );
 	 if( joypadState & BUTTON_A ) {
-	 	maxAngle = 5;
+	 	maxAngle = 7;
 	 }else if( joypadState & BUTTON_B ) {
 	 	maxAngle = 10;
 	 }else if( joypadState & BUTTON_C ) {
@@ -338,7 +339,6 @@ int main(bool hard)
 	u16 currAngle = 0;
 	setAngle(currAngle, 150);
 	int stepDir = 1;
-	int rotationDelay = 0;
 	while (TRUE)
 	{
 		// read joypad to set max angle dynamically
@@ -349,39 +349,30 @@ int main(bool hard)
 		SPR_setPosition(treeSprite, fix32ToInt(treePosX), 54);
 
 		// Fake rotation
-		if (rotationDelay == 0)
+		currAngle += stepDir;
+		if (stepDir == 1 && currAngle < 512)
 		{
-			currAngle += stepDir;
-			if (stepDir == 1 && currAngle < 512)
+			if (currAngle == maxAngle)
 			{
-				if (currAngle > maxAngle)
-				{
-					stepDir = -1;
-				}
+				stepDir = -1;
 			}
-			else if (stepDir == -1 && currAngle == 0)
-			{
-				currAngle = 1024;
-			}
-			else if (stepDir == -1 && currAngle > 512)
-			{
-				if (currAngle < 1024 - maxAngle)
-				{
-					stepDir = 1;
-				}
-			}
-			else if (stepDir == 1 && currAngle > 1024)
-			{
-				currAngle = 0;
-			}
-			setAngle(currAngle, 130);
 		}
-		/*
-		++rotationDelay;
-		if( rotationDelay > 3 ) {
-			rotationDelay = 0;
+		else if (stepDir == -1 && currAngle == 0)
+		{
+			currAngle = 1024;
 		}
-		*/
+		else if (stepDir == -1 && currAngle > 512)
+		{
+			if (currAngle == 1024 - maxAngle)
+			{
+				stepDir = 1;
+			}
+		}
+		else if (stepDir == 1 && currAngle == 1024)
+		{
+			currAngle = 0;
+		}
+		setAngle(currAngle, 130);
 
 		// set scrolling to fake the rotaiton.
 		VDP_setHorizontalScrollLine(BG_A, START_ROW_A, hScrollA, ROWS_A, DMA);
