@@ -28,25 +28,28 @@
 // 16
 // 17-19                                <<<< BGA
 // 20-27 fastest gorund									<<<<<<< END BG_B
-#define ROWS_A 200
-#define START_ROW_A 24
-#define COLS_A 20
-s16 hScrollA[ROWS_A];
-s16 vScrollA[COLS_A];
+#define ROWS_A 3  
+#define START_ROW_A 17
+fix32 speedA[ROWS_A];
+fix32 planeOffsetA[ROWS_A];
+fix32 imageOffsetA[ROWS_A];
+u16 lastSrcColA[ROWS_A];
+u16 lastDstColA[ROWS_A];
+s16 scrollA[ROWS_A];
 
-#define ROWS_B 200
-#define START_ROW_B 24
+#define ROWS_B 25
+#define START_ROW_B 3
 fix32 speedB[ROWS_B];
 fix32 planeOffsetB[ROWS_B];
 fix32 imageOffsetB[ROWS_B];
 u16 lastSrcColB[ROWS_B];
 u16 lastDstColB[ROWS_B];
-s16 hScrollB[ROWS_B];
+s16 scrollB[ROWS_B];
 
 
 
 
-void updateBackground(VDPPlane plane, const TileMap *tilemap, int index,
+void updateTiles(VDPPlane plane, const TileMap *tilemap, int index,
 								 fix32 *speed,
 								 fix32 *planeOffset,
 								 fix32 *imageOffset,
@@ -57,15 +60,13 @@ void updateBackground(VDPPlane plane, const TileMap *tilemap, int index,
 								 u16 rows)
 {
 
-	for (s16 row = 0; row < rows; row+=8)
+	for (s16 row = 0; row < rows; ++row)
 	{
 		// Set the scrolling position of plane per row
-		//planeOffset[row] = fix32Add(planeOffset[row], speed[row]);
-		memcpy( planeOffset[row], fix32Add(planeOffset[row], speed[row]),  );
-
+		planeOffset[row] = fix32Add(planeOffset[row], speed[row]);
 		if (planeOffset[row] >= FIX32(PLANE_MAX_PIXEL)) // plane in memory is 512 pixels wide
 		{
-			memcpy( planeOffset[row] = FIX32(0); 
+			planeOffset[row] = FIX32(0); 
 		}
 
 		// keep track of where we are in the image per row
@@ -198,7 +199,7 @@ int main(bool hard)
 	setupB();
 
 	// set scrolling mode to TILE for horizontal.
-	VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_TILE);
+	VDP_setScrollingMode(HSCROLL_TILE, VSCROLL_PLANE);
 
 	// get tile positions in VRAM.
 	int ind = TILE_USER_INDEX;
@@ -302,7 +303,7 @@ int main(bool hard)
 
 		VDP_setHorizontalScrollTile(BG_A, START_ROW_A, scrollA, ROWS_A, CPU);
 
-		updateBackground(BG_B, bg.tilemap, indexB,
+		updateTiles(BG_B, bg.tilemap, indexB,
 								speedB,
 								planeOffsetB,
 								imageOffsetB,
