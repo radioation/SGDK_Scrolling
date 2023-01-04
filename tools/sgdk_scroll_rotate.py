@@ -94,7 +94,7 @@ def main(args, loglevel):
 # Standard boilerplate to call the main() function to begin
 # the program.
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser( description = "Does a thing to some stuff.",
+  parser = argparse.ArgumentParser( description = "Generates rotation arrays for SGDK.",
                                     epilog = "As an alternative to the commandline, params can be placed in a file, one per line, and specified on the commandline like '%(prog)s @params.conf'.",
                                     fromfile_prefix_chars = '@' )
   # TODO Specify your real parameters here.
