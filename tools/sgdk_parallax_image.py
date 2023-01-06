@@ -1,26 +1,93 @@
 #!/usr/bin/env python
 
 import os,  argparse, logging
+import numpy as np
 import math
 from PIL import Image
+import cv2
 
 # Gather our code in a main() function
 def main(args, loglevel):
   logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
-  topCount = 8
-  bottomCount = 4
-  topRow = 160
-  bottomRow = 223
-  image1 = "" 
-  image2 = "" 
-  image3 = "" 
-  image4 = "" 
+  startRow = 160
+  if args.start_row:
+    startRow =  args.start_row
+  endRow = 223
+  if args.end_row:
+    endRow =  args.end_row
+
+  imageFilename = "image.png" 
+  if args.input_filename:
+    imageFilename =  args.input_filename
+
   outputFilename = "bg.png"
+  if args.output_filename:
+    outputFilename =  args.output_filename
 
-  # start row
+  COLS = 320  
+  ROWS = 224
+  REPEAT = 5
+
+  with Image.open( imageFilename ) as im:
+    inputImg = im.convert('RGB')
+    inputWidth, inputHeight = im.size
+    #indexed = np.array(im) 
+    inputCv = np.array(inputImg)
+
+    pal = im.getpalette()
+
+    # work image
+    tmpImg = Image.new('RGB', (COLS, ROWS))
+    tmpCv = np.array(tmpImg)
+
+    # get source points
+    # srcRect = ((0,0), (inputWidth,inputHeight))
+    srcTopLeft = ( 0, 0 )
+    srcTopRight = ( inputWidth, 0 )
+    srcBottomLeft = ( 0, inputHeight ) 
+    srcBottomRight = ( inputWidth, inputHeight )
+    srcPts = np.array( [ srcBottomLeft, srcBottomRight, srcTopRight, srcTopLeft] )    
 
 
-# Standard boilerplate to call the main() function to begin
+    # detination points
+    dstTopLeft = ( 130, 112 )
+    dstTopRight = ( 159, 112 )
+    dstBottomLeft = ( 100,223) 
+    dstBottomRight = ( 159,223 )
+    dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
+    dstPoly = np.array( [[ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft]] )
+
+
+    # Get Perspective Transform Algorithm
+    srcPtsList = np.float32( srcPts.tolist() )
+    dstPtsList = np.float32( dstPts.tolist() )
+    xfrmMatrix = cv2.getPerspectiveTransform(srcPtsList, dstPtsList)
+    
+    # warp it
+    image_size = (tmpCv.shape[1], tmpCv.shape[0])
+    warpCv = cv2.warpPerspective(inputCv, xfrmMatrix, dsize=image_size)
+    warpImg = Image.fromarray( warpCv )
+    warpImg.save( "warp.png" )
+
+    # copy mask 
+    maskCv = np.zeros_like(tmpCv)
+    maskCv = cv2.fillPoly(maskCv, pts = dstPoly, color = (255, 255, 255) )
+    maskCv = maskCv.all(axis=2)
+    tmpCv[maskCv, :] = warpCv[maskCv, :]
+    maskImg = Image.fromarray( tmpCv )
+    maskImg.save( "mask.png" )
+
+
+
+
+
+    # convert backto PIL 
+    outImg = Image.new('P', (COLS, ROWS))
+    outImg.putpalette(pal)
+    outImg.save( outputFilename )
+
+
+
 # the program.
 if __name__ == '__main__':
   parser = argparse.ArgumentParser( 
@@ -34,18 +101,6 @@ if __name__ == '__main__':
       help="increase output verbosity",
       action="store_true")
 
-  parser.add_argument( "-t",
-      "--top_count",
-      type=int,
-      help = "Number of image units at top",
-      metavar = "ARG")
-
-  parser.add_argument( "-b",
-      "--bottom_count",
-      type=int,
-      help = "number of image units at bottom",
-      metavar = "ARG")
-
   parser.add_argument( "-s",
       "--start_row",
       type=int,
@@ -58,24 +113,9 @@ if __name__ == '__main__':
       help = "Which row ends the floor",
       metavar = "ARG")
 
-  parser.add_argument( "-1",
-      "--image_1",
-      help = "input image",
-      metavar = "ARG")
-
-  parser.add_argument( "-2",
-      "--image_2",
-      help = "input image",
-      metavar = "ARG")
-
-  parser.add_argument( "-3",
-      "--image_3",
-      help = "input image",
-      metavar = "ARG")
-
-  parser.add_argument( "-4",
-      "--image_4",
-      help = "input image",
+  parser.add_argument( "-i",
+      "--input_filename",
+      help = "input image filename",
       metavar = "ARG")
 
 
