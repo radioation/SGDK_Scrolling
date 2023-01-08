@@ -20,17 +20,17 @@ s16 planeBDeltas[20] = {9, 9, 7, 7, 5, 5, 5, 4, 3, 2, 2, 3, 4, 5, 5, 5, 7, 7, 9,
 //s16 planeBDeltas[20] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 // setup fake rotation by changing the foreground horizontal and vertical scrolling
-void setAngle( u16 angle,  s16 startY, s16 endY, s16 centerY, s16 vscroll[] ) {
+void setAngle( u16 angle,  s16 startY, s16 endY, s16 centerY, s16 vscroll[], s16 hOffset, s16 vOffset ) {
 	 for( int row = startY; row < endY; ++row ){
 	 	fix32 shift = fix32Mul(FIX32( (row - centerY)>>1 ), sinFix32(angle));	
-		hScrollA[row] = fix32ToInt( shift ) - 32;
+		hScrollA[row] = fix32ToInt( shift ) - 32 + hOffset;
 	 } 
 
 	// vertical scroll tiles are 16 pixels wide.  Using 8 * (col-10) to scale the scrolling effect
 	// at the extreme left and right of the screen  the factor would be -80 and + 80
 	for( int col = 1; col < 19; ++col ){
 		fix32 shift = fix32Mul(FIX32(   (col - 9)<<3 ), sinFix32(angle));	
-		vscroll[col] = fix32ToInt( shift );
+		vscroll[col] = fix32ToInt( shift ) + vOffset;
 	} 
 }
 
@@ -47,7 +47,7 @@ HINTERRUPT_CALLBACK HIntHandler()
 	if( lineDisplay == 104  ) {
 		// set vertical rotation component for lwoer part of BG_A
 		memcpy( vScrollA, vScrollLowerA, sizeof(vScrollLowerA));
-		VDP_setVerticalScrollTile(BG_A, 0, vScrollA, 20, CPU);
+		VDP_setVerticalScrollTile(BG_A, 0, vScrollA, 20, DMA);
 	} 
   // Count raster lines
   lineDisplay++;
@@ -60,7 +60,7 @@ void VBlankHandler()
 
 		// set vertical rotation component for upper part of BG_A
 		memcpy( vScrollA, vScrollUpperA, sizeof(vScrollUpperA));
-		VDP_setVerticalScrollTile(BG_A, 0, vScrollA, 20, CPU);
+		VDP_setVerticalScrollTile(BG_A, 0, vScrollA, 20, DMA);
  }
 
 
@@ -95,8 +95,10 @@ struct CP_SPRITE shipSprite;
 
 
 
-void myJoyHandler(u16 joy, u16 changed, u16 state)
-{
+static void readJoypad( u16 joypadId ) {
+	u16 state = JOY_readJoypad( joypadId );
+	shipSprite.vel_x = 0;
+	shipSprite.vel_y = 0;
 	/*Set player velocity if left or right are pressed;
 	 *set velocity to 0 if no direction is pressed */
 	if (state & BUTTON_RIGHT)
@@ -107,13 +109,6 @@ void myJoyHandler(u16 joy, u16 changed, u16 state)
 	{
 		shipSprite.vel_x = -2;
 	}
-	else
-	{
-		if ((changed & BUTTON_RIGHT) | (changed & BUTTON_LEFT))
-		{
-			shipSprite.vel_x = 0;
-		}
-	}
 
 	if (state & BUTTON_UP)
 	{
@@ -122,13 +117,6 @@ void myJoyHandler(u16 joy, u16 changed, u16 state)
 	else if (state & BUTTON_DOWN)
 	{
 		shipSprite.vel_y = 2;
-	}
-	else
-	{
-		if ((changed & BUTTON_UP) | (changed & BUTTON_DOWN))
-		{
-			shipSprite.vel_y = 0;
-		}
 	}
 }
 
@@ -146,6 +134,8 @@ void update()
 		shipSprite.vel_x = -shipSprite.vel_x;
 	}
 
+	int oldAnim = shipAnim;
+	// ease back to center
 	if (shipSprite.vel_x == 0)
 	{
 		if (shipAnim > 5)
@@ -161,21 +151,23 @@ void update()
 	{
 		if (shipSprite.vel_x > 0)
 		{
-			++shipAnim;
-			if (shipAnim > 10)
+			if (shipAnim < 10)
 			{
-				shipAnim = 10;
+			  ++shipAnim;
 			}
 		}
 		else
 		{
-			--shipAnim;
-			if (shipAnim < 0)
+			if (shipAnim > 0)
 			{
-				shipAnim = 0;
+			 --shipAnim;
 			}
 		}
 	}
+
+//	if( shipAnim != oldAnim ) {
+//		SPR_setAnim(shipSprite.sprite, shipAnim);
+//	}
 
 	// Check vertical bounds
 	if (shipSprite.pos_y < TOP_EDGE)
@@ -252,7 +244,7 @@ int main(bool hard)
 	SPR_update();
 
 	JOY_init();
-	JOY_setEventHandler(&myJoyHandler);
+
 
 	for (int row = 0; row < 224; ++row)
 	{
@@ -298,15 +290,26 @@ int main(bool hard)
 		++lowerAnglePos;
 	}
 	lowerAnglePos = 20;
-
+	
+	s16 upperHShift = 0;
+	s16 upperVShift = -15;
+	s16 upperVShiftMax = 5;
+	s16 upperVShiftMin = -15;
+	s16 upperVShiftDir = 1;
 
   u16 delay = 0;
 	while (TRUE)
 	{
 		if (delay !=1 )
 		{
+			s16 angle =  upperAngles[upperAnglePos];
+			if( angle < 1019 && angle > 1003 ) {
+				++upperHShift;
+			} else if( angle > 5 && angle < 21 ) {
+				--upperHShift;
+			}
 
-			setAngle(upperAngles[upperAnglePos], 0, 80, 40, vScrollUpperA);
+			setAngle(angle, 0, 90, 40+upperVShift, vScrollUpperA, upperHShift, upperVShift );
 			++upperAnglePos;
 			if (upperAnglePos == 80)
 			{
@@ -315,15 +318,22 @@ int main(bool hard)
 		}
 		else 
 		{
-			setAngle(lowerAngles[lowerAnglePos], 144, 224, 200, vScrollLowerA);
+			setAngle(lowerAngles[lowerAnglePos], 144, 224, 200, vScrollLowerA, 0, 0);
 			++lowerAnglePos;
 			if (lowerAnglePos == 40)
 			{
 				lowerAnglePos = 0;
 			}
+			upperVShift += upperVShiftDir;
+			if( upperVShiftDir > 0 &&  upperVShift == upperVShiftMax ) {
+				upperVShiftDir  = -1;
+			} else if( upperVShiftDir < 0 &&  upperVShift == upperVShiftMin ) {
+				upperVShiftDir  = +1;
+			}
+
 		}
 		++delay;
-		if( delay > 1 ) {
+		if( delay > 3 ) {
 			delay = 0;
 		}
 		for (int i = 0; i < 20; i++)
@@ -331,11 +341,14 @@ int main(bool hard)
 			vScrollB[i] -= planeBDeltas[i];
 		}
 
+		readJoypad(JOY_1);
 		update();
-		SPR_setAnim(shipSprite.sprite, shipAnim);
 
-		VDP_setHorizontalScrollLine(BG_A, 0, hScrollA, 224, CPU);
+		VDP_setHorizontalScrollLine(BG_A, 0, hScrollA, 224, DMA);
 		VDP_setVerticalScrollTile(BG_B, 0, vScrollB, 20, DMA); // use array to set plane offsets
+
+
+		SPR_setPosition( shipSprite.sprite, shipSprite.pos_x, shipSprite.pos_y );
 
 		SPR_update();
 
