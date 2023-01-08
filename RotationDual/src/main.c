@@ -28,7 +28,7 @@ void setAngle( u16 angle,  s16 startY, s16 endY, s16 centerY, s16 vscroll[] ) {
 
 	// vertical scroll tiles are 16 pixels wide.  Using 8 * (col-10) to scale the scrolling effect
 	// at the extreme left and right of the screen  the factor would be -80 and + 80
-	for( int col = 0; col < 20; ++col ){
+	for( int col = 1; col < 19; ++col ){
 		fix32 shift = fix32Mul(FIX32(   (col - 9)<<3 ), sinFix32(angle));	
 		vscroll[col] = fix32ToInt( shift );
 	} 
@@ -44,11 +44,10 @@ static vu16  lineDisplay   = 0;             // line position on display screen
 
 HINTERRUPT_CALLBACK HIntHandler()
 {
-	if( lineDisplay == 90  ) {
+	if( lineDisplay == 104  ) {
 		// set vertical rotation component for lwoer part of BG_A
 		memcpy( vScrollA, vScrollLowerA, sizeof(vScrollLowerA));
 		VDP_setVerticalScrollTile(BG_A, 0, vScrollA, 20, CPU);
-		VDP_setVerticalScrollTile(BG_B, 0, vScrollB, 20, DMA); // use array to set plane offsets
 	} 
   // Count raster lines
   lineDisplay++;
@@ -257,11 +256,10 @@ int main(bool hard)
 
 	for (int row = 0; row < 224; ++row)
 	{
-		hScrollA[row] = -32;
+		hScrollA[row] = -40;
 	}
 
 	// Setup interrupt handlers
-	/*
 	SYS_disableInts();
 	{
 		SYS_setVBlankCallback(VBlankHandler);
@@ -270,11 +268,12 @@ int main(bool hard)
 		VDP_setHInterrupt(1);
 	}
 	SYS_enableInts();
-*/
+
+
 	while (TRUE)
 	{
 		setAngle(20, 0,  80,  40, vScrollUpperA);
-		setAngle(1019, 180, 223, 220, vScrollLowerA);
+		setAngle(1014, 144, 224, 200, vScrollLowerA);
 
 		for (int i = 0; i < 20; i++)
 		{
@@ -284,7 +283,7 @@ int main(bool hard)
 		update();
 		SPR_setAnim(shipSprite.sprite, shipAnim);
 
-		VDP_setHorizontalScrollLine(BG_A, 0, hScrollA, 224, DMA);
+		VDP_setHorizontalScrollLine(BG_A, 0, hScrollA, 224, CPU);
 		VDP_setVerticalScrollTile(BG_B, 0, vScrollB, 20, DMA); // use array to set plane offsets
 
 		SPR_update();

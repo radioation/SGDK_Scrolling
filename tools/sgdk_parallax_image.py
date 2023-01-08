@@ -50,10 +50,10 @@ def main(args, loglevel):
 
 
     # detination points
-    dstTopLeft = ( 130, 112 )
-    dstTopRight = ( 159, 112 )
-    dstBottomLeft = ( 100,223) 
-    dstBottomRight = ( 159,223 )
+    dstTopLeft = ( 130, startRow )
+    dstTopRight = ( 159, startRow )
+    dstBottomLeft = ( 100, endRow ) 
+    dstBottomRight = ( 159, endRow  )
     dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
     dstPoly = np.array( [[ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft]] )
 
