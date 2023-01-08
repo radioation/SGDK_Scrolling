@@ -11,11 +11,32 @@
 #define PLANE_MAX_VERTICAL_TILE 32
 s16 hScrollA[224];
 s16 vScrollA[20] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+s16 vScrollUpperA[20];
+s16 vScrollLowerA[20];
 s16 planeADeltas[20] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 s16 vScrollB[20] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 s16 planeBDeltas[20] = {12, 12, 10, 10, 8, 8, 8, 6, 4, 2, 2, 4, 6, 8, 8, 8, 10, 10, 12, 12};
 // s16 planeBMod[20] ={1,1, 3,3, 4,4,  5, 6, 7,8, 8,7,6,5, 4,4 ,3,3, 1,1};
+
+// setup fake rotation by changing the foreground horizontal and vertical scrolling
+void setAngle( u16 angle, int centerY, s16 vscroll[] ) {
+	/*
+	 for( int row = START_ROW_A; row < START_ROW_A + ROWS_A; ++row ){
+	 	fix32 shift = fix32Mul(FIX32( (row - centerY)>>1 ), sinFix32(angle));	
+		hScrollA[row-START_ROW_A] = fix32ToInt( shift ) - 24;
+	 } 
+*/
+
+	// vertical scroll tiles are 16 pixels wide.  Using 8 * (col-10) to scale the scrolling effect
+	// at the extreme left and right of the screen  the factor would be -80 and + 80
+	for( int col = 0; col < 20; ++col ){
+		fix32 shift = fix32Mul(FIX32(   (col - 9)<<3 ), sinFix32(angle));	
+		vscroll[col] = fix32ToInt( shift );
+	} 
+}
+
+
 
 
 /////////////////////////////////////////////////////////////////////
@@ -27,13 +48,14 @@ static s16 scrollLower   = -20;
 
 HINTERRUPT_CALLBACK HIntHandler()
 {
+	/**/
 	if( lineDisplay == 90  ) {
-    // Set line to display
-   //VDP_setVerticalScroll(BG_B, scrollLower );
 		for (int i = 0; i < 20; ++i)
 		{
-			vScrollA[i] = scrollLower;
+			//vScrollA[i] = scrollLower;
+			vScrollA[i] = vScrollLowerA[i];
 		}
+		//memcpy( vScrollA, vScrollLowerA, sizeof(vScrollLowerA));
 		VDP_setVerticalScrollTile(BG_A, 0, vScrollA, 20, CPU);
 	} 
   // Count raster lines
@@ -45,10 +67,14 @@ void VBlankHandler()
     // Reset to line 0
     lineDisplay = 0;
     //VDP_setVerticalScroll(BG_A, scrollUpper );
+		/*
 		for (int i = 0; i < 20; ++i)
 		{
-			vScrollA[i] = scrollUpper;
+			//vScrollA[i] = scrollUpper;
+			vScrollA[i] = vScrollUpperA[i];
 		}
+		*/
+		memcpy( vScrollA, vScrollUpperA, sizeof(vScrollUpperA));
 		VDP_setVerticalScrollTile(BG_A, 0, vScrollA, 20, CPU);
  }
 
@@ -260,10 +286,10 @@ int main(bool hard)
   SYS_enableInts();
 
 
-
-
 	while (TRUE)
 	{
+		setAngle( 20, 20, vScrollUpperA );
+		setAngle( 1013, 20, vScrollLowerA );
 
 		for (int i = 0; i < 20; i++)
 		{
