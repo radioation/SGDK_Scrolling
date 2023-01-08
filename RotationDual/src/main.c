@@ -270,11 +270,62 @@ int main(bool hard)
 	SYS_enableInts();
 
 
+	// pre calc angles to simplify logic later
+	u16 upperAngles[80];
+	u16 upperAnglePos = 0;
+	for( s16 angle = 20; angle > 0; --angle)  {
+		upperAngles[upperAnglePos] = angle;
+		upperAngles[79-upperAnglePos] = angle;
+		++upperAnglePos;
+	}
+	for( s16 angle = 1023; angle > 1003; --angle)  {
+		upperAngles[upperAnglePos] = angle;
+		upperAngles[79-upperAnglePos] = angle;
+		++upperAnglePos;
+	}
+	upperAnglePos = 0;
+
+	u16 lowerAngles[40];
+	u16 lowerAnglePos = 0;
+	for( s16 angle = 10; angle > 0; --angle)  {
+		lowerAngles[lowerAnglePos] = angle;
+		lowerAngles[39-lowerAnglePos] = angle;
+		++lowerAnglePos;
+	}
+	for( s16 angle = 1023; angle > 1013; --angle)  {
+		lowerAngles[lowerAnglePos] = angle;
+		lowerAngles[39-lowerAnglePos] = angle;
+		++lowerAnglePos;
+	}
+	lowerAnglePos = 20;
+
+
+  u16 delay = 0;
 	while (TRUE)
 	{
-		setAngle(20, 0,  80,  40, vScrollUpperA);
-		setAngle(1014, 144, 224, 200, vScrollLowerA);
+		if (delay !=1 )
+		{
 
+			setAngle(upperAngles[upperAnglePos], 0, 80, 40, vScrollUpperA);
+			++upperAnglePos;
+			if (upperAnglePos == 80)
+			{
+				upperAnglePos = 0;
+			}
+		}
+		else 
+		{
+			setAngle(lowerAngles[lowerAnglePos], 144, 224, 200, vScrollLowerA);
+			++lowerAnglePos;
+			if (lowerAnglePos == 40)
+			{
+				lowerAnglePos = 0;
+			}
+		}
+		++delay;
+		if( delay > 1 ) {
+			delay = 0;
+		}
 		for (int i = 0; i < 20; i++)
 		{
 			vScrollB[i] -= planeBDeltas[i];
