@@ -71,6 +71,7 @@ void VBlankHandler()
 #define RIGHT_EDGE 320
 #define TOP_EDGE 0
 #define BOTTOM_EDGE 224
+#define MAX_SHOTS 3
 
 int shipAnim = 5;
 // sprite info
@@ -92,6 +93,7 @@ struct CP_SPRITE
 };
 
 struct CP_SPRITE shipSprite;
+struct CP_SPRITE shipShots[MAX_SHOTS];
 
 
 
@@ -99,6 +101,44 @@ static void readJoypad( u16 joypadId ) {
 	u16 state = JOY_readJoypad( joypadId );
 	shipSprite.vel_x = 0;
 	shipSprite.vel_y = 0;
+
+	if (state & BUTTON_A) {
+
+		int addedShot = 0;
+		for( int i=0; i < MAX_SHOTS; ++i ) {
+			if( shipShots[i].active == FALSE ) {
+				shipShots[i].active = TRUE;
+				// set its starting position
+				shipShots[i].pos_x = shipSprite.pos_x+12;
+				shipShots[i].pos_y = shipSprite.pos_y;
+				switch( addedShot ) {
+					case 0:
+						shipShots[i].vel_x =  0;
+						shipShots[i].vel_y = -6;
+						break;
+
+					case 1:
+						shipShots[i].vel_x = -2;
+						shipShots[i].vel_y = -5;
+						break;
+
+					case 2:
+						shipShots[i].vel_x =  2;
+						shipShots[i].vel_y = -5;
+						break;
+
+
+				}
+				++addedShot;
+				if( addedShot >= 3 ) {
+					break;
+				}
+			}
+		}
+
+	}
+
+
 	/*Set player velocity if left or right are pressed;
 	 *set velocity to 0 if no direction is pressed */
 	if (state & BUTTON_RIGHT)
@@ -134,37 +174,6 @@ void update()
 		shipSprite.vel_x = -shipSprite.vel_x;
 	}
 
-	// ease back to center
-	if (shipSprite.vel_x == 0)
-	{
-		if (shipAnim > 5)
-		{
-			--shipAnim;
-		}
-		else if (shipAnim < 5)
-		{
-			++shipAnim;
-		}
-	}
-	else
-	{
-		if (shipSprite.vel_x > 0)
-		{
-			if (shipAnim < 10)
-			{
-			  ++shipAnim;
-			}
-		}
-		else
-		{
-			if (shipAnim > 0)
-			{
-			 --shipAnim;
-			}
-		}
-	}
-
-
 	// Check vertical bounds
 	if (shipSprite.pos_y < TOP_EDGE)
 	{
@@ -180,7 +189,52 @@ void update()
 	// Position the ship
 	shipSprite.pos_x += shipSprite.vel_x;
 	shipSprite.pos_y += shipSprite.vel_y;
+
+
+	// shots
+	for( int i=0; i < MAX_SHOTS; ++i ) {
+		if( shipShots[i].active == TRUE ) {
+			shipShots[i].pos_x +=  shipShots[i].vel_x;
+			shipShots[i].pos_y +=  shipShots[i].vel_y;
+			if(shipShots[i].pos_y  < 0 ) {
+				shipShots[i].pos_x = -16;
+				shipShots[i].pos_y = 230;
+				shipShots[i].vel_x = 0;
+				shipShots[i].vel_y = 0;
+				shipShots[i].active = FALSE;
+			}
+			SPR_setPosition(shipShots[i].sprite,shipShots[i].pos_x,shipShots[i].pos_y);
+		//} else {
+			//SPR_setPosition( shipShots[i].sprite, -32, 230 );
+		}
+	}
+
+
+
 }
+
+
+void createShipShots() {
+	int xpos = -16;
+	int ypos = 230;
+
+	for( int i=0; i < MAX_SHOTS; ++i ) {
+		shipShots[i].pos_x = xpos;
+		shipShots[i].pos_y = ypos;
+		shipShots[i].vel_x = 0;
+		shipShots[i].vel_y = 0;
+		shipShots[i].active = FALSE;
+		shipShots[i].hitbox_x1 = 0;
+		shipShots[i].hitbox_y1 = 0;
+		shipShots[i].hitbox_x2 = 8;
+		shipShots[i].hitbox_y2 = 8;
+
+		shipShots[i].sprite = SPR_addSprite( &shots, xpos, ypos, TILE_ATTR( PAL3, 0, FALSE, FALSE ));
+		SPR_setAnim( shipShots[i].sprite, 2 );
+	}
+
+}
+
 
 
 int main(bool hard)
@@ -194,6 +248,7 @@ int main(bool hard)
 	PAL_setPalette(PAL0, plane_b_pal.data, CPU);
 	PAL_setPalette(PAL1, plane_a_pal.data, CPU);
 	PAL_setPalette(PAL2, ships_pal.data, CPU);
+	PAL_setPalette(PAL3, shots_pal.data, CPU);
 	
   PAL_setColor(0, 0x0000);
 
@@ -237,6 +292,7 @@ int main(bool hard)
 	shipSprite.sprite = SPR_addSprite(&ships, shipSprite.pos_x, shipSprite.pos_y, TILE_ATTR(PAL2, 1, FALSE, FALSE));
 	SPR_setAnim(shipSprite.sprite, shipAnim);
 
+	createShipShots();
 	SPR_update();
 
 	JOY_init();
@@ -296,13 +352,12 @@ int main(bool hard)
 	s16 upperVShiftMin = -15;
 	s16 upperVShiftDir = 1;
 
-	s16 lowerVShift = -2;
+	s16 lowerVShift = -16;
 	s16 lowerVShiftMax = 0;
-	s16 lowerVShiftMin = -4;
+	s16 lowerVShiftMin = -16;
 	s16 lowerVShiftDir = 1;
 
   u16 delay = 0;
-  u16 delay2 = 0;
 	while (TRUE)
 	{
 		if (delay !=1 )
@@ -324,31 +379,29 @@ int main(bool hard)
 		else 
 		{
 			setAngle(lowerAngles[lowerAnglePos], 144, 224, 200, vScrollLowerA, 0, lowerVShift);
+			//setAngle(0, 144, 224, 200, vScrollLowerA, 0, lowerVShift);
 			++lowerAnglePos;
 			if (lowerAnglePos == 60)
 			{
 				lowerAnglePos = 0;
 			}
-			if (delay2 == 0)
-			{
 				lowerVShift += lowerVShiftDir;
-				if (lowerVShiftDir > 0 && lowerVShift == lowerVShiftMax)
+				if (lowerVShiftDir > 0 && lowerVShift >= lowerVShiftMax)
 				{
 					lowerVShiftDir = -1;
 				}
-				else if (lowerVShiftDir < 0 && lowerVShift == lowerVShiftMin)
+				else if (lowerVShiftDir < 0 && lowerVShift <= lowerVShiftMin)
 				{
 					lowerVShiftDir = +1;
 				}
-			}
 
 			// move the top
 			upperVShift += upperVShiftDir;
-			if (upperVShiftDir > 0 && upperVShift == upperVShiftMax)
+			if (upperVShiftDir > 0 && upperVShift >= upperVShiftMax)
 			{
 				upperVShiftDir = -1;
 			}
-			else if (upperVShiftDir < 0 && upperVShift == upperVShiftMin)
+			else if (upperVShiftDir < 0 && upperVShift <= upperVShiftMin)
 			{
 				upperVShiftDir = +1;
 			}
@@ -357,11 +410,6 @@ int main(bool hard)
 		if (delay > 3)
 		{
 			delay = 0;
-		}
-		++delay2;
-		if (delay2 > 10)
-		{
-			delay2 = 0;
 		}
 
 		// scroll the asteroids in BG_B
