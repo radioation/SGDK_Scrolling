@@ -134,7 +134,6 @@ void update()
 		shipSprite.vel_x = -shipSprite.vel_x;
 	}
 
-	int oldAnim = shipAnim;
 	// ease back to center
 	if (shipSprite.vel_x == 0)
 	{
@@ -165,9 +164,6 @@ void update()
 		}
 	}
 
-//	if( shipAnim != oldAnim ) {
-//		SPR_setAnim(shipSprite.sprite, shipAnim);
-//	}
 
 	// Check vertical bounds
 	if (shipSprite.pos_y < TOP_EDGE)
@@ -277,19 +273,22 @@ int main(bool hard)
 	}
 	upperAnglePos = 0;
 
-	u16 lowerAngles[40];
+	u16 lowerAngles[60];
 	u16 lowerAnglePos = 0;
-	for( s16 angle = 10; angle > 0; --angle)  {
+	for( s16 angle = 15; angle > 0; --angle)  {
 		lowerAngles[lowerAnglePos] = angle;
-		lowerAngles[39-lowerAnglePos] = angle;
+		lowerAngles[59-lowerAnglePos] = angle;
 		++lowerAnglePos;
 	}
-	for( s16 angle = 1023; angle > 1013; --angle)  {
+	for( s16 angle = 1023; angle > 1008; --angle)  {
 		lowerAngles[lowerAnglePos] = angle;
-		lowerAngles[39-lowerAnglePos] = angle;
+		lowerAngles[59-lowerAnglePos] = angle;
 		++lowerAnglePos;
 	}
-	lowerAnglePos = 20;
+	for( int i=0; i < 60; ++i ) {
+		KLog_U1("angle: ", lowerAngles[i] );
+	}
+	lowerAnglePos = 30;
 	
 	s16 upperHShift = 0;
 	s16 upperVShift = -15;
@@ -297,7 +296,13 @@ int main(bool hard)
 	s16 upperVShiftMin = -15;
 	s16 upperVShiftDir = 1;
 
+	s16 lowerVShift = -2;
+	s16 lowerVShiftMax = 0;
+	s16 lowerVShiftMin = -4;
+	s16 lowerVShiftDir = 1;
+
   u16 delay = 0;
+  u16 delay2 = 0;
 	while (TRUE)
 	{
 		if (delay !=1 )
@@ -318,38 +323,61 @@ int main(bool hard)
 		}
 		else 
 		{
-			setAngle(lowerAngles[lowerAnglePos], 144, 224, 200, vScrollLowerA, 0, 0);
+			setAngle(lowerAngles[lowerAnglePos], 144, 224, 200, vScrollLowerA, 0, lowerVShift);
 			++lowerAnglePos;
-			if (lowerAnglePos == 40)
+			if (lowerAnglePos == 60)
 			{
 				lowerAnglePos = 0;
 			}
-			upperVShift += upperVShiftDir;
-			if( upperVShiftDir > 0 &&  upperVShift == upperVShiftMax ) {
-				upperVShiftDir  = -1;
-			} else if( upperVShiftDir < 0 &&  upperVShift == upperVShiftMin ) {
-				upperVShiftDir  = +1;
+			if (delay2 == 0)
+			{
+				lowerVShift += lowerVShiftDir;
+				if (lowerVShiftDir > 0 && lowerVShift == lowerVShiftMax)
+				{
+					lowerVShiftDir = -1;
+				}
+				else if (lowerVShiftDir < 0 && lowerVShift == lowerVShiftMin)
+				{
+					lowerVShiftDir = +1;
+				}
 			}
 
+			// move the top
+			upperVShift += upperVShiftDir;
+			if (upperVShiftDir > 0 && upperVShift == upperVShiftMax)
+			{
+				upperVShiftDir = -1;
+			}
+			else if (upperVShiftDir < 0 && upperVShift == upperVShiftMin)
+			{
+				upperVShiftDir = +1;
+			}
 		}
 		++delay;
-		if( delay > 3 ) {
+		if (delay > 3)
+		{
 			delay = 0;
 		}
+		++delay2;
+		if (delay2 > 10)
+		{
+			delay2 = 0;
+		}
+
+		// scroll the asteroids in BG_B
 		for (int i = 0; i < 20; i++)
 		{
 			vScrollB[i] -= planeBDeltas[i];
 		}
 
-		readJoypad(JOY_1);
-		update();
-
 		VDP_setHorizontalScrollLine(BG_A, 0, hScrollA, 224, DMA);
 		VDP_setVerticalScrollTile(BG_B, 0, vScrollB, 20, DMA); // use array to set plane offsets
 
+		// player object
+		readJoypad(JOY_1);
+		update();
 
-		SPR_setPosition( shipSprite.sprite, shipSprite.pos_x, shipSprite.pos_y );
-
+		SPR_setPosition(shipSprite.sprite, shipSprite.pos_x, shipSprite.pos_y);
 		SPR_update();
 
 		SYS_doVBlankProcess();
