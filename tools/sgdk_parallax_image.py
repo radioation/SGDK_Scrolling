@@ -3,7 +3,7 @@
 import os,  argparse, logging
 import numpy as np
 import math
-from PIL import Image
+from PIL import Image, ImageDraw
 import cv2
 
 #def makeProjectFiles( destDir, imageFilename ):
@@ -52,7 +52,6 @@ def main(args, loglevel):
     inputCv = np.array(inputImg)
 
     pal = im.getpalette()
-
     # get source points
     srcTopLeft = ( 0, 0 )
     srcTopRight = ( inputWidth, 0 )
@@ -72,9 +71,6 @@ def main(args, loglevel):
       dstBottomRight = ( bottomLeftStart + rep * bottomPolyWidth + bottomPolyWidth, endRow  )
       dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
       dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
-      #print( dstPoly )
-      #dstPoly = np.array([[160.0, 130.0], [350, 130], [250, 300]], dtype=np.int32)
-        
 
       # Get Perspective Transform Algorithm
       srcPtsList = np.float32( srcPts.tolist() )
@@ -85,23 +81,22 @@ def main(args, loglevel):
       image_size = (tmpCv.shape[1], tmpCv.shape[0])
       warpCv = cv2.warpPerspective(inputCv, xfrmMatrix, dsize=image_size)
       warpImg = Image.fromarray( warpCv )
-      warpImg.save( "warp_%d.png" %(rep) )
+      #warpImg.save( "warp_%d.png" %(rep) )
   
       ## create a copy mask 
-      print( dstPoly )
       maskCv = np.zeros_like(tmpCv)
       maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
       maskCv = maskCv.all(axis=2)
       # copy warped image
       tmpCv[maskCv, :] = warpCv[maskCv, :]
-      #maskImg = Image.fromarray( tmpCv )
-      #maskImg.save( "mask_%d.png"%(rep) )
   
     # convert backto PIL 
     maskImg = Image.fromarray( tmpCv )
-    maskImg.save( "mask.png")
-    outImg = Image.new('P', (outputCols, rows))
-    outImg.putpalette(pal)
+    ImageDraw.floodfill( maskImg, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
+    #maskImg.save( "mask.png")
+    outImg = maskImg.quantize( palette = im )
+    #outImg = Image.new('P', (outputCols, rows))
+    #outImg.putpalette(pal)
     outImg.save( outputFilename )
 
 
