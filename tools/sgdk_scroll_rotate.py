@@ -18,20 +18,31 @@ def main(args, loglevel):
   maxRot = 10.0   # end angle in degrees.
   if args.end_angle:
     maxRot =  args.end_angle 
-  rotStep = 1.0   # step size.
+  rotStep = 1.0   # angle step size in degrees
   if args.angle_increment:
     rotStep =  args.angle_increment 
 
-  totalCols = 18  # only do the center 18 (of 20 cols)
-  if args.cols:
-    totalCols =  args.cols 
-  totalRows = 224 # default to all rows.
-  if args.rows:
-    totalRows =  args.rows 
+  # default to center 18 columns
+  colStart = 1
+  if args.column_start:
+    colStart =  args.column_start
+  colEnd = 18 
+  if args.column_end:
+    colEnd =  args.column_end_
+  totalCols = colEnd - colStart +1 # inclusive total+1
   centerX = 10    # in columns not pixels
   if args.center_x:
     centerX =  args.center_x 
-  centerY = 112   # in pixels/lines
+
+  # default to all rows.
+  rowStart = 0
+  if args.row_start:
+    rowStart =  args.row_start
+  rowEnd = 223
+  if args.row_end:
+    rowEnd =  args.row_end
+  totalRows =  rowEnd - rowStart +1 # inclusive total +1
+  centerY = 112   # rows are pixels/lines.  Center is 112 for NTSC
   if args.center_y:
     centerY =  args.center_y 
 
@@ -39,10 +50,13 @@ def main(args, loglevel):
   if args.output_filename:
     outputFilename =  args.output_filename
 
+  prefix = ""
+  if args.prefix:
+    prefix =  args.prefix
 
   # Sega specific
   COL_WIDTH = 16   # 16 pixel width
-  ROW_HEIGHT = 1   # rows are 1 pixel in height
+  ROW_HEIGHT = 1   # rows are 1 pixel in height, might be plausible to do 8 for tiled?
 
   logging.info("Parameters")
   logging.info("Start angle: %f Stop angle: %f Step size: %f", minRot, maxRot, rotStep)
@@ -59,36 +73,36 @@ def main(args, loglevel):
   outfile = open( outputFilename, 'w')
   outfile.write("#ifndef _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.write("#define _%s_\n" % outputFilename.upper().replace(".","_") )
-  outfile.write("\n\nhScroll = {")
+  outfile.write("\n\n%shScroll = {" % (prefix + "_") )
   # horizontal scrolling values
+  offset = 0
   for deg in np.arange( minRot, maxRot, rotStep ):
     rad = deg * math.pi/180; 
-    startRow = int(centerY - totalRows / 2 )
-    stopRow = int(centerY + totalRows / 2 )
-    for row in range( startRow, stopRow, ROW_HEIGHT ):
-      rowShift = row-centerY * math.sin( rad ) - startRow - 24
+    outfile.write("\n  // rotation values for angle %f starts at %d\n" %( deg, offset) )
+    for row in range( rowStart, rowEnd+1, ROW_HEIGHT ):
+      rowShift = (row-centerY) * math.sin( rad ) #  - rowStart 
       logging.debug("HSCROLL deg:%f row: %d scroll value:%d", deg, row, rowShift)
       outfile.write( str(round(rowShift)) )
       outfile.write( ", " )
-    outfile.write("  // rotation values for angle %f \n" % deg)
+      offset +=1
   outfile.write("0 }")
     
-  outfile.write("\n\nhScroll = {")
+  outfile.write("\n\n%svScroll = {" % (prefix + "_"))
+  offset = 0
   # vertical scrolling values
   for deg in np.arange( minRot, maxRot, rotStep ):
     rad = deg * math.pi/180; 
-    startCol = int(centerX - totalCols / 2 )
-    stopCol = int(centerX + totalCols / 2 )
-    for col in range( startCol, stopCol, 1 ):
+    outfile.write("\n // rotation values for angle %f starts at %d\n" % (deg,offset))
+    for col in range( colStart, colEnd+1, 1 ):
       colShift =  16 * (col - centerX) * math.sin( rad )
       logging.debug("VSCROLL deg:%f col: %d scroll value:%d", deg, col, colShift)
       outfile.write( str(round(colShift)) )
       outfile.write( ", " )
+      offset +=1
 
-    outfile.write("  // rotation values for angle %f \n" % deg)
   outfile.write("0 }")
 
-  outfile.write("#endif // _%s_\n" % outputFilename.upper().replace(".","_") )
+  outfile.write("\n\n#endif // _%s_\n" % outputFilename.upper().replace(".","_") )
   
  
 # Standard boilerplate to call the main() function to begin
@@ -102,6 +116,7 @@ if __name__ == '__main__':
                       "--verbose",
                       help="Print debug messages",
                       action="store_true")
+
   parser.add_argument( "-s",
                       "--start_angle",
                       type=float,
@@ -119,9 +134,14 @@ if __name__ == '__main__':
                       metavar = "ARG")
   
   parser.add_argument( "-c",
-                      "--cols",
+                      "--column_start",
                       type=int,
-                      help = "How many columns to rotate",
+                      help = "First column to rotate",
+                      metavar = "ARG")
+  parser.add_argument( "-C",
+                      "--column_end",
+                      type=int,
+                      help = "Last column to rotate",
                       metavar = "ARG")
   parser.add_argument( "-x",
                       "--center_x",
@@ -129,10 +149,16 @@ if __name__ == '__main__':
                       help = "Which column is the center of rotation",
                       metavar = "ARG")
 
+
   parser.add_argument( "-r",
-                      "--rows",
+                      "--row_start",
                       type=int,
-                      help = "How many rows to rotate",
+                      help = "First row to rotate",
+                      metavar = "ARG")
+  parser.add_argument( "-R",
+                      "--row_end",
+                      type=int,
+                      help = "Last row to rotate",
                       metavar = "ARG")
   parser.add_argument( "-y",
                       "--center_y",
@@ -145,6 +171,10 @@ if __name__ == '__main__':
                       help = "Output filename",
                       metavar = "ARG")
 
+  parser.add_argument( "-p",
+                      "--prefix",
+                      help = "Add a prefix to array names",
+                      metavar = "ARG")
   args = parser.parse_args()
   
   # Setup logging
