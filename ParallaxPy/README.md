@@ -93,24 +93,40 @@ Scroll width far: 80.000
 Scroll width near: 160.000
 Starting row floor: 180
 Ending row floor: 223
-Scroll increment floor: 0.0233
+* Scroll increment floor: 0.0233
+* Final Scroll increment floor: 1.8605
 Image size 480 x 224
 ```
+
 This lets you know that the tile takes up 80 pixels at the top of the floor
 pattern and 160 at the bottom.   It also lets you know where the floor pattern
-starts and stops in the image. The scroll increment lets you know how much each
-successive scroll line should increase if you were scrolling the top row one 
-pixel at a time:
+starts and stops in the image (rows 180 and 223). The scroll increment is the 
+amount each successive scroll line should increase if you were scrolling the top
+row one pixel at a time.   
 
+
+
+If you want the floor rows to scroll right to left, you'd move row 80 left
+by one pixel, row 81 left by 1.0233 pixels, row 81 by 1.0466, pixels, and so
+on.  The final row (223) would be moved left by 1 +  pixels.
 ```c
-#include <genesis.h>
-#include "resources.h"
-
-s16 hScrollB[224];
-fix32 fscroll[224];
-s16 scrollStep = 0;
-
-static scrollLeftInc() {
+  ++scrollStep;
+  fix32 fStep = FIX32(1.0);
+  for( u16 row=180; row<224; ++row ) {
+    fscroll[row] = fix32Sub( fscroll[row], fStep ); // shift row left
+    fStep = fix32Add( fStep, FIX32(0.0233));        // change shift by 0.0233 pixels
+  }
+```
+This works up to 80 pixels for the top row.  This is because floor pattern
+repeats every 80 pixles. To handle this, reset the scroll values when the top
+row has moved 80 pixels.
+```c
+    scrollStep = 0;
+    memset(fscroll, 0, sizeof(fscroll)); // zero out all scroll values
+```
+Put together:
+```c
+static scrollLeftLoop() {
   ++scrollStep;
   fix32 fStep = FIX32(1.0);
   if (scrollStep < 80) {
@@ -121,6 +137,61 @@ static scrollLeftInc() {
   } else {
     scrollStep = 0;
     memset(fscroll, 0, sizeof(fscroll));
+  }
+}
+```
+
+Scrolling the floor floor left to right is similar. The main difference is you
+move the rows in the opposite direction.  Row 80 moves to the right by one
+pixel, row 81 right by 1.0233 pixels, row 81 by 1.0466, pixels, etc.
+```c
+  --scrollStep;
+  fix32 fStep = FIX32(1.0);
+  for (u16 row = 180; row < 224; ++row)
+  {
+    fscroll[row] = fix32Add(fscroll[row], fStep);
+    fStep = fix32Add(fStep, FIX32(0.0233));
+  }
+```
+Again, this only works up to 80 pixels for the top row.  Resetting the scroll
+lines is a bit more complex here.  You have to put all of the lines at their
+Final scroll position. This can be computed with the 'final scroll increment'
+value output from the script.  In this case:
+
+`* Final Scroll increment floor: 1.8605`
+
+```c
+    scrollStep = 80;
+    fix32 scroll = FIX32(-80.0);  // scrolled by 80.
+    for (u16 row = 180; row < 224; ++row)
+    {
+      fscroll[row] = scroll;
+      scroll = fix32Sub(scroll, FIX32(1.8605)); // decrement by final value
+    }
+```
+Put together:
+```c
+static scrollRightLoop()
+{
+  --scrollStep;
+  fix32 fStep = FIX32(1.0);
+  if (scrollStep >= 0)
+  {
+    for (u16 row = 180; row < 224; ++row)
+    {
+      fscroll[row] = fix32Add(fscroll[row], fStep);
+      fStep = fix32Add(fStep, FIX32(0.0233));
+    }
+  }
+  else
+  {
+    scrollStep = 80;             
+    fix32 scroll = FIX32(-80.0); 
+    for (u16 row = 180; row < 224; ++row)
+    {
+      fscroll[row] = scroll;
+      scroll = fix32Sub(scroll, FIX32(1.8605));
+    }
   }
 }
 ```
