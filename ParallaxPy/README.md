@@ -31,7 +31,6 @@ I'm using WSL and Ubuntu 22.02 on my development machine, but I imagine
 most people will be using Windows.  I'm going to keep on using WSL, but 
 I have installed the windows versions to test the script. 
 1. Get Python3. I used the Microsoft Store version.
-![Python3 Microsoft Store Download](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/python_win_install.png)
 
 2. Install the dependencies.  I opened a command line window and typed:
 ```cmd
@@ -197,11 +196,37 @@ static scrollRightLoop()
 ```
 
 
-
-## 
+## Floor with four near repetitions and 6 far repetitions
+You can increase the number of image repetitions with the `-f` and `-n`
+parameters.  To have six repeitions at the far side of the floor and four
+repetitions at the near side run these parameters:
 ```bash
-python3 sgdk_parallax_image.py -i test_wood.png   -f 6 -n 4   -S 1 -E 40  -I test_tile.png  -p ../TESTP
+python3 sgdk_parallax_image.py -i test_tile.png   -f 6 -n 4  -o tilefloor.png
 ```
+I also specified a different floor image with the `-i` parameter and changed the 
+output filename with `-o`.
+![Tile Floor](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/tilefloor.png)
+## Add a ceiling
+Adding a ceiling can be done by specifying the start (`-S`) and end (`-E`) rows for the ceiling.
+```bash
+python3 sgdk_parallax_image.py -i test_wood.png   -f 6 -n 4   -S 8 -E 48 -o woodceil.png
+```
+![Wood Ceiling](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/woodceil.png)
+## Add a ceiling with its own tile images
+Specifying `-I` lets you add a second image for the ceiling.
+```bash
+python3 sgdk_parallax_image.py -i test_wood.png   -f 6 -n 4   -S 8 -E 48  -I test_tile.png  -o woodfloor_tileceiling.png
+```
+![Wood Floor Tile Ceiling](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/woodfloor_tileceiling.png)
+
+## Create an example project
+Specifying a folder with the `-p` parameter will create a project folder with files for SGDK.
+If your environment is setup correctly, the project files can be built with:
+```cmd
+ %GDK%\bin\make -f %GDK%\makefile.gen
+```
+
+
 
 
 
