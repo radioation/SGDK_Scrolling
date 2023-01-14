@@ -37,7 +37,7 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
   srcfile.write('fix32 fscroll[224];\n')
   srcfile.write('s16 scrollStep = 0;\n\n')
 
-  srcfile.write('static void scrollRight() {\n')
+  srcfile.write('static void scrollLeft() {\n')
   srcfile.write('  ++scrollStep;\n')
   srcfile.write('  if (scrollStep < %d) {\n' % farPolyWidth )
 
@@ -60,11 +60,11 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
     srcfile.write( "    fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollIncrement ) )
     scrollIncrement += scrollRowStep
   srcfile.write('  } else {\n')
-  srcfile.write('    scrollStep = 0;\nmemset(fscroll, 0, sizeof(fscroll));\n')
+  srcfile.write('    scrollStep = 0;\n    memset(fscroll, 0, sizeof(fscroll));\n')
   srcfile.write('  }\n}\n\n')
 
 
-  srcfile.write('static void scrollLeft() {\n')
+  srcfile.write('static void scrollRight() {\n')
   srcfile.write('  --scrollStep;\n')
   srcfile.write('  if (scrollStep >= 0) {\n')
 
@@ -91,10 +91,10 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
       scroll -= scrollStep
 
   scroll = - int( farPolyWidth)
-  scrollStep =  (nearPolyWidth - farPolyWidth) / scrollRows
+  finalScrollStep =  (nearPolyWidth - farPolyWidth) / scrollRows
   for r in range( startRow, endRow + 1, 1):
     srcfile.write( "    fscroll[%d] = FIX32(%.3f);\n" % ( r, scroll ) )
-    scroll -= scrollStep
+    scroll -= finalScrollStep
   srcfile.write('  }\n}\n\n')
 
   srcfile.write("""int main(bool hard)
@@ -116,7 +116,7 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
 
   while (TRUE)
   {
-    scrollRight();
+    scrollLeft();
     for (int i = 0; i < 224; i++) // Not very efficient.  
     {
       hScrollB[i] = fix32ToInt(fscroll[i]);
@@ -183,7 +183,9 @@ def main(args, loglevel):
   scrollRows = endRow - startRow
   scrollRatio = nearPolyWidth / farPolyWidth 
   scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
-  print("Scroll increment floor: %.4f" % scrollRowStep)
+  print("* Scroll increment floor: %.4f" % scrollRowStep)
+  finalScrollStep =  (nearPolyWidth - farPolyWidth) / scrollRows
+  print("* Final Scroll increment floor: %.4f" % finalScrollStep)
 
 
   if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :

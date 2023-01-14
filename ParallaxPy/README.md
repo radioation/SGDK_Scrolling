@@ -79,7 +79,55 @@ options:
 ```
 
 # Examples
+## Floor with two near repetitions and four far repetitions
+The default behavior is to take an input image named "image.png" and repeated
+it twice at the bottom row of the image (row 223) and four times at the top of
+the floor pattern (row 80).  Type 
+```bash 
+python3 sgdk_parallax_image.py 
+```
+This genreates an image called `bg.png` and should  output text similar to the
+following
+```cmd
+Scroll width far: 80.000
+Scroll width near: 160.000
+Starting row floor: 180
+Ending row floor: 223
+Scroll increment floor: 0.0233
+Image size 480 x 224
+```
+This lets you know that the tile takes up 80 pixels at the top of the floor
+pattern and 160 at the bottom.   It also lets you know where the floor pattern
+starts and stops in the image. The scroll increment lets you know how much each
+successive scroll line should increase if you were scrolling the top row one 
+pixel at a time:
 
+```c
+#include <genesis.h>
+#include "resources.h"
+
+s16 hScrollB[224];
+fix32 fscroll[224];
+s16 scrollStep = 0;
+
+static scrollLeftInc() {
+  ++scrollStep;
+  fix32 fStep = FIX32(1.0);
+  if (scrollStep < 80) {
+    for( u16 row=180; row<224; ++row ) {
+      fscroll[row] = fix32Sub( fscroll[row], fStep );
+      fStep = fix32Add( fStep, FIX32(0.0233));
+    }
+  } else {
+    scrollStep = 0;
+    memset(fscroll, 0, sizeof(fscroll));
+  }
+}
+```
+
+
+
+## 
 ```bash
 python3 sgdk_parallax_image.py -i test_wood.png   -f 6 -n 4   -S 1 -E 40  -I test_tile.png  -p ../TESTP
 ```
