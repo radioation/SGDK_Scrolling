@@ -18,8 +18,8 @@ some obvious things that could be improved:
 * Generate code with user configurable scrolling step sizes 
 * Generate code with lookup tables for scrolling values
 
-I'll likely check input values and handle odd numbers, but this script is very
-low priority so I may never get around to the rest of it.
+I'll likely add code to check input values and handle odd numbers, but this
+script is very low priority.  I may never get around to the rest of it.
 
 
 ## Dependencies
