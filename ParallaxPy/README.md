@@ -109,7 +109,7 @@ The output gives you information you can use to scroll the image.
 
 If you want the floor rows to scroll right to left, you'd move row 80 left
 by one pixel, row 81 left by 1.0233 pixels, row 81 by 1.0466, pixels, and so
-on.  The final row (223) would be moved left by 1 +  pixels.
+on.  
 ```c
   ++scrollStep;
   fix32 fStep = FIX32(1.0);
@@ -118,9 +118,9 @@ on.  The final row (223) would be moved left by 1 +  pixels.
     fStep = fix32Add( fStep, FIX32(0.0233));        // change shift by 0.0233 pixels
   }
 ```
-This works up to 80 pixels for the top row.  This is because floor pattern
-repeats every 80 pixels. To handle this, reset the scroll values when the top
-row has moved 80 pixels.
+This works up to 80 pixels for the top row.  This is because the output image
+only has enough pixles drawn to scroll one repetition.  To handle this, reset
+the scroll values when the top row has moved 80 pixels.  
 ```c
     scrollStep = 0;
     memset(fscroll, 0, sizeof(fscroll)); // zero out all scroll values
@@ -142,7 +142,7 @@ static scrollLeftLoop() {
 }
 ```
 
-Scrolling the floor floor left to right is similar. The main difference is you
+Scrolling the floor left to right is similar. The main difference is you
 move the rows in the opposite direction.  Row 80 moves to the right by one
 pixel, row 81 right by 1.0233 pixels, row 81 by 1.0466, pixels, etc.
 ```c
@@ -196,7 +196,6 @@ static scrollRightLoop()
   }
 }
 ```
-
 
 ## Floor with four near repetitions and 6 far repetitions
 You can increase the number of image repetitions with the `-f` and `-n`
