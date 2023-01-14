@@ -5,12 +5,99 @@ import numpy as np
 import math
 from PIL import Image, ImageDraw
 import cv2
+import shutil
 
-#def makeProjectFiles( destDir, imageFilename ):
-#  # make resource dir and rescomp file
-#  print('todo')
-#  # make bare source file with some scrolling
+def makeProjectFiles( destDir, imageFilename, endRow, startRow, bottomPolyWidth, topPolyWidth ):
+  # make resource dir and rescomp file
+  srcFolder = destDir + "/src"
+  if not os.path.exists(srcFolder):
+    os.makedirs(srcFolder)
+  resFolder = destDir + "/res"
+  if not os.path.exists(resFolder):
+    os.makedirs(resFolder)
+  bgFolder = resFolder + "/bg"
+  if not os.path.exists(bgFolder):
+    os.makedirs(bgFolder)
 
+  # copy out image to backtround folder
+  shutil.copy( imageFilename, bgFolder )
+
+  # Make resource file
+  resfile = open( resFolder + "/resources.res", 'w')
+  fname = os.path.basename( imageFilename )
+  resfile.write('image plane_b "bg/%s" 0\n'% fname )
+  resfile.write('PALETTE plane_b_pal "bg/%s"\n' % fname )
+  resfile.close()
+
+  # make bare source file with some scrolling
+  srcfile = open( srcFolder + "/main.c", 'w')
+  srcfile.write('#include <genesis.h>\n')
+  srcfile.write('#include "resources.h"\n\n')
+  srcfile.write('s16 hScrollB[224];\n')
+  srcfile.write('fix32 fscroll[224];\n')
+  srcfile.write('s16 scrollStep = 0;\n\n')
+
+  srcfile.write('static void scrollRight() {\n')
+  srcfile.write('  ++scrollStep;\n')
+  srcfile.write('  if (scrollStep < %d) {\n' % topPolyWidth )
+
+  scrollRows = endRow - startRow
+  scrollRatio = bottomPolyWidth / topPolyWidth 
+  scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
+  scrollIncrement = 1.0;
+  for r in range( startRow, endRow + 1, 1):
+    srcfile.write( "    fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollIncrement ) )
+    scrollIncrement += scrollRowStep
+  srcfile.write('  } else {\n')
+  srcfile.write('    scrollStep = 0;\nmemset(fscroll, 0, sizeof(fscroll));\n')
+  srcfile.write('  }\n}\n\n')
+
+
+  srcfile.write('static void scrollLeft() {\n')
+  srcfile.write('  --scrollStep;\n')
+  srcfile.write('  if (scrollStep >= 0) {')
+  scrollIncrement = 1.0;
+  for r in range( startRow, endRow + 1, 1):
+    srcfile.write( "    fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollIncrement ) )
+    scrollIncrement += scrollRowStep
+  srcfile.write('  } else {\n')
+  srcfile.write('    scrollStep = %d;'% int(topPolyWidth) )
+  scroll = - int( topPolyWidth)
+  scrollStep =  (bottomPolyWidth - topPolyWidth) / scrollRows
+  for r in range( startRow, endRow + 1, 1):
+    srcfile.write( "    fscroll[%d] = FIX32(%.3f);\n" % ( r, scroll ) )
+    scroll -= scrollStep
+  srcfile.write('  }\n}\n\n')
+
+  srcfile.write("""int main(bool hard)
+{
+  memset(hScrollB, 0, sizeof(hScrollB));
+  memset(fscroll, 0, sizeof(fscroll));
+  VDP_setScreenWidth320();
+
+  PAL_setPalette(PAL0, plane_b_pal.data, CPU);
+  PAL_setColor(0, 0x0000);
+  // set scrolling modes to support fake rotation
+  VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_PLANE);
+
+  // get initial tile position in VRAM
+  int ind = TILE_USER_INDEX;
+  int indexB = ind;
+  VDP_loadTileSet(plane_b.tileset, indexB, CPU);
+  VDP_drawImageEx(BG_B, &plane_b, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, indexB), 0, 0, FALSE, TRUE);
+
+  while (TRUE)
+  {
+    scrollRight();
+    for (int i = 160; i < 224; i++)
+    {
+      hScrollB[i] = fix32ToInt(fscroll[i]);
+    }
+    VDP_setHorizontalScrollLine(BG_B, 0, hScrollB, 224, DMA);
+    SYS_doVBlankProcess();
+  }
+}""")
+  srcfile.close()
 
 def main(args, loglevel):
   logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
@@ -36,17 +123,21 @@ def main(args, loglevel):
   if args.output_filename:
     outputFilename =  args.output_filename
 
+  projectDir = ""
+  if args.project_directory:
+    projectDir =  args.project_directory
+
   COLS = 320  
   rows = 224
 
   topPolyWidth = COLS / farImageReps
   bottomPolyWidth = COLS / nearImageReps
- 
+
   bottomTotalWidth = bottomPolyWidth * farImageReps
   offset = farImageReps % 2 != nearImageReps % 2
   outputCols = int(COLS + bottomPolyWidth)
 
-  
+
   with Image.open( imageFilename ) as im:
     inputImg = im.convert('RGB')
     inputWidth, inputHeight = im.size
@@ -78,20 +169,20 @@ def main(args, loglevel):
       srcPtsList = np.float32( srcPts.tolist() )
       dstPtsList = np.float32( dstPts.tolist() )
       xfrmMatrix = cv2.getPerspectiveTransform(srcPtsList, dstPtsList)
-  
+
       # warp it
       image_size = (tmpCv.shape[1], tmpCv.shape[0])
       warpCv = cv2.warpPerspective(inputCv, xfrmMatrix, dsize=image_size)
       warpImg = Image.fromarray( warpCv )
       #warpImg.save( "warp_%d.png" %(rep) )
-  
+
       ## create a copy mask 
       maskCv = np.zeros_like(tmpCv)
       maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
       maskCv = maskCv.all(axis=2)
       # copy warped image
       tmpCv[maskCv, :] = warpCv[maskCv, :]
-  
+
     # convert backto PIL 
     maskImg = Image.fromarray( tmpCv )
     ImageDraw.floodfill( maskImg, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
@@ -101,25 +192,8 @@ def main(args, loglevel):
     #outImg.putpalette(pal)
     outImg.save( outputFilename )
 
-    scrollRows = endRow - startRow
-    scrollRatio = bottomPolyWidth / topPolyWidth 
-    scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
-    scrollIncrement = 1.0;
-    for r in range( startRow, endRow + 1, 1):
-      print( "fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));" % ( r, r, scrollIncrement ) )
-      scrollIncrement += scrollRowStep
-
-
-    scrollIncrement = 1.0;
-    for r in range( startRow, endRow + 1, 1):
-      print( "fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));" % ( r, r, scrollIncrement ) )
-      scrollIncrement += scrollRowStep
-
-    scroll = -53
-    scrollStep =  (bottomPolyWidth - topPolyWidth) / scrollRows
-    for r in range( startRow, endRow + 1, 1):
-      print( "fscroll[%d] = FIX32(%.3f);" % ( r, scroll ) )
-      scroll -= scrollStep
+    if len(projectDir) > 0 :
+      makeProjectFiles( projectDir, outputFilename, endRow, startRow, bottomPolyWidth, topPolyWidth )
 
 # the program.
 if __name__ == '__main__':
@@ -163,10 +237,14 @@ if __name__ == '__main__':
       help = "input image filename",
       metavar = "ARG")
 
-
   parser.add_argument( "-o",
       "--output_filename",
       help = "Output filename",
+      metavar = "ARG")
+
+  parser.add_argument( "-p",
+      "--project_directory",
+      help = "Create Project Directory",
       metavar = "ARG")
 
   args = parser.parse_args()

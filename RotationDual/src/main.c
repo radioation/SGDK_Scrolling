@@ -102,6 +102,7 @@ static void readJoypad( u16 joypadId ) {
 	shipSprite.vel_x = 0;
 	shipSprite.vel_y = 0;
 
+/*
 	if (state & BUTTON_A) {
 
 		int addedShot = 0;
@@ -137,6 +138,7 @@ static void readJoypad( u16 joypadId ) {
 		}
 
 	}
+*/
 
 
 	/*Set player velocity if left or right are pressed;
@@ -191,6 +193,7 @@ void update()
 	shipSprite.pos_y += shipSprite.vel_y;
 
 
+/*
 	// shots
 	for( int i=0; i < MAX_SHOTS; ++i ) {
 		if( shipShots[i].active == TRUE ) {
@@ -208,7 +211,7 @@ void update()
 			//SPR_setPosition( shipShots[i].sprite, -32, 230 );
 		}
 	}
-
+*/
 
 
 }
@@ -292,7 +295,7 @@ int main(bool hard)
 	shipSprite.sprite = SPR_addSprite(&ships, shipSprite.pos_x, shipSprite.pos_y, TILE_ATTR(PAL2, 1, FALSE, FALSE));
 	SPR_setAnim(shipSprite.sprite, shipAnim);
 
-	createShipShots();
+	//createShipShots();
 	SPR_update();
 
 	JOY_init();
@@ -358,8 +361,34 @@ int main(bool hard)
 	s16 lowerVShiftDir = 1;
 
   u16 delay = 0;
+	for( s16 angle = 30; angle >= 0; --angle  ) {
+			setAngle(angle, 0, 90, 40, vScrollUpperA, 0, 0 );
+			KLog("-----------------------");
+			KLog_U1("angle: ", angle );
+			for( s16 row = 0; row < 90; ++row ) {
+				KLog_S2("row:", row, " hScroll:", hScrollA[row]);
+			}
+			for( s16 col = 0; col < 20; ++col ) {
+				KLog_S2("col:", col, " vScroll:", vScrollUpperA[col]);
+			}
+	}
+
+	for( u16 angle = 1023; angle >= 994; --angle  ) {
+			setAngle(angle, 0, 90, 40, vScrollUpperA, 0, 0 );
+			KLog("-----------------------");
+			KLog_U1("angle: ", angle );
+			for( s16 row = 0; row < 90; ++row ) {
+				KLog_S2("row:", row, " hScroll:", hScrollA[row]);
+			}
+			for( s16 col = 0; col < 20; ++col ) {
+				KLog_S2("col:", col, " vScroll:", vScrollUpperA[col]);
+			}
+	}
+
+
 	while (TRUE)
 	{
+		/*
 		if (delay !=1 )
 		{
 			s16 angle =  upperAngles[upperAnglePos];
@@ -411,6 +440,7 @@ int main(bool hard)
 		{
 			delay = 0;
 		}
+		*/
 
 		// scroll the asteroids in BG_B
 		for (int i = 0; i < 20; i++)
