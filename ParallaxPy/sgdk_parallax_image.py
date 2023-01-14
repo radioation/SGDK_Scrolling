@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 import cv2
 import shutil
 
-def makeProjectFiles( destDir, imageFilename, endRow, startRow, bottomPolyWidth, topPolyWidth ):
+def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow ):
   # make resource dir and rescomp file
   srcFolder = destDir + "/src"
   if not os.path.exists(srcFolder):
@@ -39,10 +39,21 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, bottomPolyWidth,
 
   srcfile.write('static void scrollRight() {\n')
   srcfile.write('  ++scrollStep;\n')
-  srcfile.write('  if (scrollStep < %d) {\n' % topPolyWidth )
+  srcfile.write('  if (scrollStep < %d) {\n' % farPolyWidth )
+
+  scrollCeilingRows = endCeilingRow - startCeilingRow
+  scrollCeilingRatio = nearPolyWidth / farPolyWidth 
+  scrollCeilingRowStep = 0
+  scrollCeilingIncrement = 1.0
+  if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
+    scrollCeilingRowStep = ( scrollCeilingRatio - 1.0 ) / scrollCeilingRows
+    for r in range( endCeilingRow, startCeilingRow - 1, -1):
+      srcfile.write( "    fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollCeilingIncrement ) )
+      scrollCeilingIncrement += scrollCeilingRowStep
+
 
   scrollRows = endRow - startRow
-  scrollRatio = bottomPolyWidth / topPolyWidth 
+  scrollRatio = nearPolyWidth / farPolyWidth 
   scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
   scrollIncrement = 1.0;
   for r in range( startRow, endRow + 1, 1):
@@ -55,15 +66,32 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, bottomPolyWidth,
 
   srcfile.write('static void scrollLeft() {\n')
   srcfile.write('  --scrollStep;\n')
-  srcfile.write('  if (scrollStep >= 0) {')
+  srcfile.write('  if (scrollStep >= 0) {\n')
+
+  if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
+    scrollCeilingIncrement = 1.0
+    scrollCeilingRowStep = ( scrollCeilingRatio - 1.0 ) / scrollCeilingRows
+    for r in range( endCeilingRow, startCeilingRow - 1, -1):
+      srcfile.write( "    fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollCeilingIncrement ) )
+      scrollCeilingIncrement += scrollCeilingRowStep
+
+
   scrollIncrement = 1.0;
   for r in range( startRow, endRow + 1, 1):
     srcfile.write( "    fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollIncrement ) )
     scrollIncrement += scrollRowStep
   srcfile.write('  } else {\n')
-  srcfile.write('    scrollStep = %d;'% int(topPolyWidth) )
-  scroll = - int( topPolyWidth)
-  scrollStep =  (bottomPolyWidth - topPolyWidth) / scrollRows
+  srcfile.write('    scrollStep = %d;\n'% int(farPolyWidth) )
+
+  if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
+    scroll = - int( farPolyWidth)
+    scrollStep =  (nearPolyWidth - farPolyWidth) / scrollCeilingRows
+    for r in range( endCeilingRow, startCeilingRow , -1):
+      srcfile.write( "    fscroll[%d] = FIX32(%.3f);\n" % ( r, scroll ) )
+      scroll -= scrollStep
+
+  scroll = - int( farPolyWidth)
+  scrollStep =  (nearPolyWidth - farPolyWidth) / scrollRows
   for r in range( startRow, endRow + 1, 1):
     srcfile.write( "    fscroll[%d] = FIX32(%.3f);\n" % ( r, scroll ) )
     scroll -= scrollStep
@@ -89,7 +117,7 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, bottomPolyWidth,
   while (TRUE)
   {
     scrollRight();
-    for (int i = 160; i < 224; i++)
+    for (int i = 0; i < 224; i++) // Not very efficient.  
     {
       hScrollB[i] = fix32ToInt(fscroll[i]);
     }
@@ -108,6 +136,15 @@ def main(args, loglevel):
   if args.end_row:
     endRow =  args.end_row
 
+  startCeilingRow = -1 
+  if args.start_ceiling_row:
+    startCeilingRow = args.start_ceiling_row
+  endCeilingRow =-1 
+  if args.end_ceiling_row:
+    endCeilingRow =  args.end_ceiling_row
+
+  print("%d %d" %( startCeilingRow, endCeilingRow ))
+
   farImageReps = 4
   if args.far_image_reps:
     farImageReps =  args.far_image_reps
@@ -119,6 +156,10 @@ def main(args, loglevel):
   if args.input_filename:
     imageFilename =  args.input_filename
 
+  imageCeilingFilename = ""
+  if args.input_ceiling_filename:
+    imageCeilingFilename =  args.input_ceiling_filename
+
   outputFilename = "bg.png"
   if args.output_filename:
     outputFilename =  args.output_filename
@@ -127,21 +168,21 @@ def main(args, loglevel):
   if args.project_directory:
     projectDir =  args.project_directory
 
+  # 320 x 224  
   COLS = 320  
   rows = 224
 
-  topPolyWidth = COLS / farImageReps
-  bottomPolyWidth = COLS / nearImageReps
+  farPolyWidth = COLS / farImageReps
+  nearPolyWidth = COLS / nearImageReps
 
-  bottomTotalWidth = bottomPolyWidth * farImageReps
+  bottomTotalWidth = nearPolyWidth * farImageReps
   offset = farImageReps % 2 != nearImageReps % 2
-  outputCols = int(COLS + bottomPolyWidth)
+  outputCols = int(COLS + nearPolyWidth)
 
 
   with Image.open( imageFilename ) as im:
     inputImg = im.convert('RGB')
     inputWidth, inputHeight = im.size
-    #indexed = np.array(im) 
     inputCv = np.array(inputImg)
 
     pal = im.getpalette()
@@ -158,10 +199,10 @@ def main(args, loglevel):
     bottomLeftStart = COLS / 2 - bottomTotalWidth / 2
     for rep in range( 0, farImageReps +1, 1 ):
       # detination points
-      dstTopLeft = ( rep * topPolyWidth, startRow )
-      dstTopRight = ( rep * topPolyWidth + topPolyWidth, startRow )
-      dstBottomLeft = ( bottomLeftStart + rep * bottomPolyWidth, endRow +1 ) 
-      dstBottomRight = ( bottomLeftStart + rep * bottomPolyWidth + bottomPolyWidth, endRow +1  )
+      dstTopLeft = ( rep * farPolyWidth, startRow )
+      dstTopRight = ( rep * farPolyWidth + farPolyWidth, startRow )
+      dstBottomLeft = ( bottomLeftStart + rep * nearPolyWidth, endRow +1 ) 
+      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth, endRow +1  )
       dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
       dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
 
@@ -174,7 +215,7 @@ def main(args, loglevel):
       image_size = (tmpCv.shape[1], tmpCv.shape[0])
       warpCv = cv2.warpPerspective(inputCv, xfrmMatrix, dsize=image_size)
       warpImg = Image.fromarray( warpCv )
-      #warpImg.save( "warp_%d.png" %(rep) )
+      warpImg.save( "warp_%d.png" %(rep) )
 
       ## create a copy mask 
       maskCv = np.zeros_like(tmpCv)
@@ -182,18 +223,61 @@ def main(args, loglevel):
       maskCv = maskCv.all(axis=2)
       # copy warped image
       tmpCv[maskCv, :] = warpCv[maskCv, :]
+   
+    # check if ceilng was set.
+    if startCeilingRow > 0 and endCeilingRow > 0:
+      print("DO CEIL " + imageCeilingFilename )
+      ceilFilename = imageCeilingFilename if len(imageCeilingFilename) > 0 else imageFilename
+      with Image.open( ceilFilename ) as ceil:
+        inputCeilingImg = ceil.convert('RGB')
+        inputWidth, inputHeight = ceil.size
+        inputCeilingCv = np.array(inputCeilingImg)
+        # assume old pal
+        # get source points
+        srcTopLeft = ( 0, 0 )
+        srcTopRight = ( inputWidth, 0 )
+        srcBottomLeft = ( 0, inputHeight ) 
+        srcBottomRight = ( inputWidth, inputHeight )
+        srcPts = np.array( [ srcBottomLeft, srcBottomRight, srcTopRight, srcTopLeft] )    
+        topLeftStart = COLS / 2 - bottomTotalWidth / 2
+        for rep in range( 0, farImageReps +1, 1 ):
+          # detination points
+          dstTopLeft = ( topLeftStart + rep * nearPolyWidth, startCeilingRow )
+          dstTopRight = ( topLeftStart + rep * nearPolyWidth + nearPolyWidth, startCeilingRow )
+          dstBottomLeft = (  rep * farPolyWidth, endCeilingRow +1 ) 
+          dstBottomRight = (  rep * farPolyWidth + farPolyWidth, endCeilingRow +1  )
+          dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
+          dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
+          # Get Perspective Transform Algorithm
+          srcPtsList = np.float32( srcPts.tolist() )
+          dstPtsList = np.float32( dstPts.tolist() )
+          xfrmMatrix = cv2.getPerspectiveTransform(srcPtsList, dstPtsList)
+          
+          # warp it
+          image_size = (tmpCv.shape[1], tmpCv.shape[0])
+          warpCv = cv2.warpPerspective(inputCeilingCv, xfrmMatrix, dsize=image_size)
+          warpImg = Image.fromarray( warpCv )
+          #warpImg.save( "warp_ceil_%d.png" %(rep) )
+          
+          ## create a copy mask 
+          maskCv = np.zeros_like(tmpCv)
+          maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
+          maskCv = maskCv.all(axis=2)
+          # copy warped image
+          tmpCv[maskCv, :] = warpCv[maskCv, :]
 
+    
     # convert backto PIL 
     maskImg = Image.fromarray( tmpCv )
     ImageDraw.floodfill( maskImg, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
-    #maskImg.save( "mask.png")
+    ##maskImg.save( "mask.png")
     outImg = maskImg.quantize( palette = im )
     #outImg = Image.new('P', (outputCols, rows))
     #outImg.putpalette(pal)
     outImg.save( outputFilename )
 
     if len(projectDir) > 0 :
-      makeProjectFiles( projectDir, outputFilename, endRow, startRow, bottomPolyWidth, topPolyWidth )
+      makeProjectFiles( projectDir, outputFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow )
 
 # the program.
 if __name__ == '__main__':
@@ -211,13 +295,13 @@ if __name__ == '__main__':
   parser.add_argument( "-f",
       "--far_image_reps",
       type=int,
-      help = "How many times to repeat image at start of floor",
+      help = "How many times to repeat image at far side of floor",
       metavar = "ARG")
 
   parser.add_argument( "-n",
       "--near_image_reps",
       type=int,
-      help = "How many times to repeat image at end of floor",
+      help = "How many times to repeat image at near side of floor",
       metavar = "ARG")
 
   parser.add_argument( "-s",
@@ -232,9 +316,28 @@ if __name__ == '__main__':
       help = "Which row ends the floor",
       metavar = "ARG")
 
+
+
   parser.add_argument( "-i",
       "--input_filename",
       help = "input image filename",
+      metavar = "ARG")
+
+  parser.add_argument( "-S",
+      "--start_ceiling_row",
+      type=int,
+      help = "Which row starts the ceiling",
+      metavar = "ARG")
+
+  parser.add_argument( "-E",
+      "--end_ceiling_row",
+      type=int,
+      help = "Which row ends the ceiling",
+      metavar = "ARG")
+
+  parser.add_argument( "-I",
+      "--input_ceiling_filename",
+      help = "input ceiling image filename",
       metavar = "ARG")
 
   parser.add_argument( "-o",
