@@ -173,10 +173,33 @@ def main(args, loglevel):
   farPolyWidth = COLS / farImageReps
   nearPolyWidth = COLS / nearImageReps
 
+  logging.info("Image reps far: %d", farImageReps)
+  logging.info("Image reps near: %d", nearImageReps)
+  # always put out image repetition 
+  print("Scroll width far: %.3f" % farPolyWidth)
+  print("Scroll width near: %.3f" % nearPolyWidth)
+  print("Starting row floor: %d" % startRow)
+  print("Ending row floor: %d" % endRow)
+  scrollRows = endRow - startRow
+  scrollRatio = nearPolyWidth / farPolyWidth 
+  scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
+  print("Scroll increment floor: %.4f" % scrollRowStep)
+
+
+  if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
+    logging.info("Starting row ceiling: %d", startCeilingRow)
+    logging.info("Ending row ceiling: %d", endCeilingRow)
+    scrollCeilingRows = endCeilingRow - startCeilingRow
+    scrollCeilingRatio = nearPolyWidth / farPolyWidth 
+    scrollCeilingRowStep = ( scrollCeilingRatio - 1.0 ) / scrollCeilingRows
+    print("Scroll increment ceiling: %.4f" % scrollCeilingRowStep)
+
+
   bottomTotalWidth = nearPolyWidth * farImageReps
   offset = farImageReps % 2 != nearImageReps % 2
   outputCols = int(COLS + nearPolyWidth)
 
+  print("Image size %d x %d" % ( outputCols,rows ) )
 
   with Image.open( imageFilename ) as im:
     inputImg = im.convert('RGB')
@@ -198,9 +221,9 @@ def main(args, loglevel):
     for rep in range( 0, farImageReps +1, 1 ):
       # detination points
       dstTopLeft = ( rep * farPolyWidth, startRow )
-      dstTopRight = ( rep * farPolyWidth + farPolyWidth, startRow )
+      dstTopRight = ( rep * farPolyWidth + farPolyWidth +1, startRow )
       dstBottomLeft = ( bottomLeftStart + rep * nearPolyWidth, endRow +1 ) 
-      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth, endRow +1  )
+      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth +1, endRow +1  )
       dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
       dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
 
@@ -240,9 +263,9 @@ def main(args, loglevel):
         for rep in range( 0, farImageReps +1, 1 ):
           # detination points
           dstTopLeft = ( topLeftStart + rep * nearPolyWidth, startCeilingRow )
-          dstTopRight = ( topLeftStart + rep * nearPolyWidth + nearPolyWidth, startCeilingRow )
+          dstTopRight = ( topLeftStart + rep * nearPolyWidth + nearPolyWidth + 1, startCeilingRow )
           dstBottomLeft = (  rep * farPolyWidth, endCeilingRow +1 ) 
-          dstBottomRight = (  rep * farPolyWidth + farPolyWidth, endCeilingRow +1  )
+          dstBottomRight = (  rep * farPolyWidth + farPolyWidth + 1, endCeilingRow +1  )
           dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
           dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
           # Get Perspective Transform Algorithm
@@ -351,8 +374,8 @@ if __name__ == '__main__':
 
   # Setup logging
   if args.verbose:
-    loglevel = logging.DEBUG
-  else:
     loglevel = logging.INFO
+  else:
+    loglevel = logging.WARNING
 
   main(args, loglevel)
