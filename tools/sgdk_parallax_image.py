@@ -14,7 +14,7 @@ import cv2
 
 def main(args, loglevel):
   logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
-  startRow = 160
+  startRow = 180
   if args.start_row:
     startRow =  args.start_row
   endRow = 223
@@ -41,10 +41,12 @@ def main(args, loglevel):
 
   topPolyWidth = COLS / farImageReps
   bottomPolyWidth = COLS / nearImageReps
+ 
   bottomTotalWidth = bottomPolyWidth * farImageReps
   offset = farImageReps % 2 != nearImageReps % 2
   outputCols = int(COLS + bottomPolyWidth)
 
+  
   with Image.open( imageFilename ) as im:
     inputImg = im.convert('RGB')
     inputWidth, inputHeight = im.size
@@ -67,8 +69,8 @@ def main(args, loglevel):
       # detination points
       dstTopLeft = ( rep * topPolyWidth, startRow )
       dstTopRight = ( rep * topPolyWidth + topPolyWidth, startRow )
-      dstBottomLeft = ( bottomLeftStart + rep * bottomPolyWidth, endRow ) 
-      dstBottomRight = ( bottomLeftStart + rep * bottomPolyWidth + bottomPolyWidth, endRow  )
+      dstBottomLeft = ( bottomLeftStart + rep * bottomPolyWidth, endRow +1 ) 
+      dstBottomRight = ( bottomLeftStart + rep * bottomPolyWidth + bottomPolyWidth, endRow +1  )
       dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
       dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
 
@@ -99,7 +101,13 @@ def main(args, loglevel):
     #outImg.putpalette(pal)
     outImg.save( outputFilename )
 
-
+    scrollRows = endRow - startRow
+    scrollRatio = bottomPolyWidth / topPolyWidth 
+    scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
+    scrollIncrement = 1.0;
+    for r in range( startRow, endRow + 1, 1):
+      print( "hscroll[%d] = fix32Add( hscroll[%d], FIX32(%.3f));" % ( r, r, scrollIncrement ) )
+      scrollIncrement += scrollRowStep
 
 # the program.
 if __name__ == '__main__':
