@@ -143,8 +143,6 @@ def main(args, loglevel):
   if args.end_ceiling_row:
     endCeilingRow =  args.end_ceiling_row
 
-  print("%d %d" %( startCeilingRow, endCeilingRow ))
-
   farImageReps = 4
   if args.far_image_reps:
     farImageReps =  args.far_image_reps
@@ -215,7 +213,7 @@ def main(args, loglevel):
       image_size = (tmpCv.shape[1], tmpCv.shape[0])
       warpCv = cv2.warpPerspective(inputCv, xfrmMatrix, dsize=image_size)
       warpImg = Image.fromarray( warpCv )
-      warpImg.save( "warp_%d.png" %(rep) )
+      #warpImg.save( "warp_%d.png" %(rep) )
 
       ## create a copy mask 
       maskCv = np.zeros_like(tmpCv)
@@ -226,7 +224,6 @@ def main(args, loglevel):
    
     # check if ceilng was set.
     if startCeilingRow > 0 and endCeilingRow > 0:
-      print("DO CEIL " + imageCeilingFilename )
       ceilFilename = imageCeilingFilename if len(imageCeilingFilename) > 0 else imageFilename
       with Image.open( ceilFilename ) as ceil:
         inputCeilingImg = ceil.convert('RGB')
@@ -347,7 +344,7 @@ if __name__ == '__main__':
 
   parser.add_argument( "-p",
       "--project_directory",
-      help = "Create Project Directory",
+      help = "Create project directory with resource files and simple SGDK code.",
       metavar = "ARG")
 
   args = parser.parse_args()
