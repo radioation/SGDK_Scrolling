@@ -1,6 +1,6 @@
 # Parallax Image Generation Script
 
-`sgdk_parallax_iamge.py` is a simple Python script that creates endless
+`sgdk_parallax_image.py` is a simple Python script that creates endless
 scrolling images for use with Sega Genesis / SGDK.  You must supply at least
 one 16-color indexed image to be warped into a repeating floor pattern.  The
 generated image can optionally have a ceiling pattern.  The ceiling  can use
@@ -12,7 +12,7 @@ The script has some rough edges, but does what I needed it to.  There are
 some obvious things that could be improved:
 
 * Check input values for invalid combinations
-* Handle odd numbers for repeatting pattern
+* Handle odd numbers for repeating pattern
 * Blend pixels at edges of warp pattern (or sample images instead of 
   using OpenCV's warp)
 * Generate code with user configurable scrolling step sizes 
@@ -36,7 +36,7 @@ I have installed the windows versions to test the script.
 ```cmd
 pip3 install numpy
 pip3 install pillow
-pip3 install opency-python
+pip3 install opencv-python
 ```
 3. Run the script with:
 ```cmd
@@ -85,7 +85,7 @@ the floor pattern (row 80).  Type
 ```bash 
 python3 sgdk_parallax_image.py 
 ```
-This genreates an image called `bg.png` and should  output text similar to the
+This generates an image called `bg.png` and should  output text similar to the
 following
 ```cmd
 Scroll width far: 80.000
@@ -96,12 +96,14 @@ Ending row floor: 223
 * Final Scroll increment floor: 1.8605
 Image size 480 x 224
 ```
-
-This lets you know that the tile takes up 80 pixels at the top of the floor
-pattern and 160 at the bottom.   It also lets you know where the floor pattern
-starts and stops in the image (rows 180 and 223). The scroll increment is the 
-amount each successive scroll line should increase if you were scrolling the top
-row one pixel at a time.   
+The output gives you information you can use to scroll the image.
+* Scroll width far 80.000 : The repeated image takes up 80 pixels at the top row of the floor.
+* Scroll width near 160.000 : The repeated image takes up 160 pixels at the bottom row of the floor.
+* Starting row floor 180 : The floor starts at row 180 in the output image
+* Ending row floor 223 : The floor ends at row 223 in the output image
+* Scroll increment floor 0.0233  :  The amount each successive scroll line should increase if you're scrolling the top row by one pixel.
+* Final Scroll increment floor 1.8605 : The amount each floor row differs by before the scroll values needs to be reset.
+* Image size 480 x 224 : The size of the output image.
 
 
 
@@ -117,7 +119,7 @@ on.  The final row (223) would be moved left by 1 +  pixels.
   }
 ```
 This works up to 80 pixels for the top row.  This is because floor pattern
-repeats every 80 pixles. To handle this, reset the scroll values when the top
+repeats every 80 pixels. To handle this, reset the scroll values when the top
 row has moved 80 pixels.
 ```c
     scrollStep = 0;
@@ -198,7 +200,7 @@ static scrollRightLoop()
 
 ## Floor with four near repetitions and 6 far repetitions
 You can increase the number of image repetitions with the `-f` and `-n`
-parameters.  To have six repeitions at the far side of the floor and four
+parameters.  To have six repetitions at the far side of the floor and four
 repetitions at the near side run these parameters:
 ```bash
 python3 sgdk_parallax_image.py -i test_tile.png   -f 6 -n 4  -o tilefloor.png
