@@ -65,7 +65,7 @@ def main(args, loglevel):
     tmpImg = Image.new('RGB', (outputCols, rows))
     tmpCv = np.array(tmpImg)
     bottomLeftStart = COLS / 2 - bottomTotalWidth / 2
-    for rep in range( 0, farImageReps, 1 ):
+    for rep in range( 0, farImageReps +1, 1 ):
       # detination points
       dstTopLeft = ( rep * topPolyWidth, startRow )
       dstTopRight = ( rep * topPolyWidth + topPolyWidth, startRow )
@@ -106,8 +106,20 @@ def main(args, loglevel):
     scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
     scrollIncrement = 1.0;
     for r in range( startRow, endRow + 1, 1):
-      print( "hscroll[%d] = fix32Add( hscroll[%d], FIX32(%.3f));" % ( r, r, scrollIncrement ) )
+      print( "fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));" % ( r, r, scrollIncrement ) )
       scrollIncrement += scrollRowStep
+
+
+    scrollIncrement = 1.0;
+    for r in range( startRow, endRow + 1, 1):
+      print( "fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));" % ( r, r, scrollIncrement ) )
+      scrollIncrement += scrollRowStep
+
+    scroll = -53
+    scrollStep =  (bottomPolyWidth - topPolyWidth) / scrollRows
+    for r in range( startRow, endRow + 1, 1):
+      print( "fscroll[%d] = FIX32(%.3f);" % ( r, scroll ) )
+      scroll -= scrollStep
 
 # the program.
 if __name__ == '__main__':
