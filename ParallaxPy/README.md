@@ -96,6 +96,7 @@ Ending row floor: 223
 * Final Scroll increment floor: 1.8605
 Image size 480 x 224
 ```
+![default background](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/bg.png)
 The output gives you information you can use to scroll the image.
 * Scroll width far 80.000 : The repeated image takes up 80 pixels at the top row of the floor.
 * Scroll width near 160.000 : The repeated image takes up 160 pixels at the bottom row of the floor.
