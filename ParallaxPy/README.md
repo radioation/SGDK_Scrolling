@@ -31,7 +31,7 @@ I'm using WSL and Ubuntu 22.02 on my development machine, but I imagine
 most people will be using Windows.  I'm going to keep on using WSL, but 
 I have installed the windows versions to test the script. 
 1. Get Python3. I used the Microsoft Store version.
-![Python3 Microsoft Store Download](https://github.com/radioation/SGDK_Scrolling/tree/main/ParallaxPy/python_win_install.png)
+![Python3 Microsoft Store Download](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/python_win_install.png)
 
 2. Install the dependencies.  I opened a command line window and typed:
 ```cmd
