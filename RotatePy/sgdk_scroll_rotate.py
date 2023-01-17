@@ -12,47 +12,34 @@ def main(args, loglevel):
   logging.debug("Arguments:")
   logging.debug(args)
 
-  minRot = -10.0  # start angle in degrees
-  if args.start_angle:
-    minRot =  args.start_angle 
-  maxRot = 10.0   # end angle in degrees.
-  if args.end_angle:
-    maxRot =  args.end_angle 
-  rotStep = 1.0   # angle step size in degrees
-  if args.angle_increment:
-    rotStep =  args.angle_increment 
+  minRot = args.start_angle
+  maxRot = args.end_angle
+  rotStep = args.angle_increment
+  if minRot > maxRot:
+    print("Starting angle is larger than end angle")
+    return
+  if rotStep <= 0.0:
+    print("Invalid angle increment")
+    return
 
   # default to center 18 columns
-  colStart = 1
-  if args.column_start:
-    colStart =  args.column_start
-  colEnd = 18 
-  if args.column_end:
-    colEnd =  args.column_end_
+  colStart = args.column_start
+  colEnd = args.column_end
   totalCols = colEnd - colStart +1 # inclusive total+1
-  centerX = 10    # in columns not pixels
-  if args.center_x:
-    centerX =  args.center_x 
+
+  centerX = args.center_x
 
   # default to all rows.
-  rowStart = 0
-  if args.row_start:
-    rowStart =  args.row_start
-  rowEnd = 223
-  if args.row_end:
-    rowEnd =  args.row_end
+  rowStart = args.row_start
+  rowEnd = args.row_end
   totalRows =  rowEnd - rowStart +1 # inclusive total +1
-  centerY = 112   # rows are pixels/lines.  Center is 112 for NTSC
-  if args.center_y:
-    centerY =  args.center_y 
+  centerY = args.center_y
 
-  outputFilename = "rotation.h"
-  if args.output_filename:
-    outputFilename =  args.output_filename
+  # where do we put the file at
+  outputFilename = args.output_filename
 
-  prefix = ""
-  if args.prefix:
-    prefix =  args.prefix
+  # naming the variables
+  prefix =  args.prefix
 
   # Sega specific
   COL_WIDTH = 16   # 16 pixel width
@@ -119,32 +106,38 @@ if __name__ == '__main__':
 
   parser.add_argument( "-s",
                       "--start_angle",
+                      default=-5.0,
                       type=float,
-                      help = "Starting rotation",
+                      help = "Starting rotation in degrees",
                       metavar = "ARG")
   parser.add_argument( "-e",
                       "--end_angle",
+                      default=5.0,
                       type=float,
-                      help = "End rotation angle",
+                      help = "End rotation angle in degrees",
                       metavar = "ARG")
   parser.add_argument( "-i",
                       "--angle_increment",
+                      default=1.0,
                       type=float,
                       help = "Rotation step size",
                       metavar = "ARG")
   
   parser.add_argument( "-c",
                       "--column_start",
+                      default=1,
                       type=int,
                       help = "First column to rotate",
                       metavar = "ARG")
   parser.add_argument( "-C",
                       "--column_end",
+                      default=18,
                       type=int,
                       help = "Last column to rotate",
                       metavar = "ARG")
   parser.add_argument( "-x",
                       "--center_x",
+                      default=10,
                       type=int,
                       help = "Which column is the center of rotation",
                       metavar = "ARG")
@@ -152,27 +145,32 @@ if __name__ == '__main__':
 
   parser.add_argument( "-r",
                       "--row_start",
+                      default=0,
                       type=int,
                       help = "First row to rotate",
                       metavar = "ARG")
   parser.add_argument( "-R",
                       "--row_end",
+                      default=223,
                       type=int,
                       help = "Last row to rotate",
                       metavar = "ARG")
   parser.add_argument( "-y",
                       "--center_y",
+                      default=112,
                       type=int,
                       help = "Which row is the center of rotation",
                       metavar = "ARG")
 
   parser.add_argument( "-o",
                       "--output_filename",
+                      default="rotation.h",
                       help = "Output filename",
                       metavar = "ARG")
 
   parser.add_argument( "-p",
                       "--prefix",
+                      default=""
                       help = "Add a prefix to array names",
                       metavar = "ARG")
   args = parser.parse_args()
