@@ -129,42 +129,22 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
 
 def main(args, loglevel):
   logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
-  startRow = 180
-  if args.start_row:
-    startRow =  args.start_row
-  endRow = 223
-  if args.end_row:
-    endRow =  args.end_row
+  startRow = args.start_row
+  endRow = args.end_row
 
-  startCeilingRow = -1 
-  if args.start_ceiling_row:
-    startCeilingRow = args.start_ceiling_row
-  endCeilingRow =-1 
-  if args.end_ceiling_row:
-    endCeilingRow =  args.end_ceiling_row
+  startCeilingRow = args.start_ceiling_row
+  endCeilingRow =  args.end_ceiling_row
 
-  farImageReps = 4
-  if args.far_image_reps:
-    farImageReps =  args.far_image_reps
-  nearImageReps = 2
-  if args.near_image_reps:
-    nearImageReps =  args.near_image_reps
+  farImageReps = args.far_image_reps
+  nearImageReps = args.near_image_reps
 
-  imageFilename = "image.png" 
-  if args.input_filename:
-    imageFilename =  args.input_filename
+  imageFilename =  args.input_filename
 
-  imageCeilingFilename = ""
-  if args.input_ceiling_filename:
-    imageCeilingFilename =  args.input_ceiling_filename
+  imageCeilingFilename =  args.input_ceiling_filename
 
-  outputFilename = "bg.png"
-  if args.output_filename:
-    outputFilename =  args.output_filename
+  outputFilename =  args.output_filename
 
-  projectDir = ""
-  if args.project_directory:
-    projectDir =  args.project_directory
+  projectDir =  args.project_directory
 
   # 320 x 224  
   COLS = 320  
@@ -316,24 +296,28 @@ if __name__ == '__main__':
 
   parser.add_argument( "-f",
       "--far_image_reps",
+      default = 4,
       type=int,
       help = "How many times to repeat image at far side of floor",
       metavar = "ARG")
 
   parser.add_argument( "-n",
       "--near_image_reps",
+      default = 2,
       type=int,
       help = "How many times to repeat image at near side of floor",
       metavar = "ARG")
 
   parser.add_argument( "-s",
       "--start_row",
+      default = 180,
       type=int,
       help = "Which row starts the floor",
       metavar = "ARG")
 
   parser.add_argument( "-e",
       "--end_row",
+      default = 223,
       type=int,
       help = "Which row ends the floor",
       metavar = "ARG")
@@ -342,33 +326,39 @@ if __name__ == '__main__':
 
   parser.add_argument( "-i",
       "--input_filename",
+      default = 'image.png',
       help = "input image filename",
       metavar = "ARG")
 
   parser.add_argument( "-S",
       "--start_ceiling_row",
+      default = -1,
       type=int,
       help = "Which row starts the ceiling",
       metavar = "ARG")
 
   parser.add_argument( "-E",
       "--end_ceiling_row",
+      default = -1,
       type=int,
       help = "Which row ends the ceiling",
       metavar = "ARG")
 
   parser.add_argument( "-I",
       "--input_ceiling_filename",
+      default = '',
       help = "input ceiling image filename",
       metavar = "ARG")
 
   parser.add_argument( "-o",
       "--output_filename",
+      default = 'bg.png',
       help = "Output filename",
       metavar = "ARG")
 
   parser.add_argument( "-p",
       "--project_directory",
+      default = '',
       help = "Create project directory with resource files and simple SGDK code.",
       metavar = "ARG")
 
