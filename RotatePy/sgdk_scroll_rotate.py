@@ -60,10 +60,10 @@ def main(args, loglevel):
   outfile = open( outputFilename, 'w')
   outfile.write("#ifndef _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.write("#define _%s_\n" % outputFilename.upper().replace(".","_") )
-  outfile.write("\n\n%shScroll = {" % (prefix + "_") )
+  outfile.write("\n\ns16 %shScroll[] = {" % (prefix + "_") )
   # horizontal scrolling values
   offset = 0
-  for deg in np.arange( minRot, maxRot, rotStep ):
+  for deg in np.arange( minRot, maxRot + rotStep, rotStep ): # include end rot
     rad = deg * math.pi/180; 
     outfile.write("\n  // rotation values for angle %f starts at %d\n" %( deg, offset) )
     for row in range( rowStart, rowEnd+1, ROW_HEIGHT ):
@@ -72,12 +72,12 @@ def main(args, loglevel):
       outfile.write( str(round(rowShift)) )
       outfile.write( ", " )
       offset +=1
-  outfile.write("0 }")
+  outfile.write("0 };")
     
-  outfile.write("\n\n%svScroll = {" % (prefix + "_"))
+  outfile.write("\n\ns16 %svScroll[] = {" % (prefix + "_"))
   offset = 0
   # vertical scrolling values
-  for deg in np.arange( minRot, maxRot, rotStep ):
+  for deg in np.arange( minRot, maxRot + rotStep, rotStep ): # include end rot
     rad = deg * math.pi/180; 
     outfile.write("\n // rotation values for angle %f starts at %d\n" % (deg,offset))
     for col in range( colStart, colEnd+1, 1 ):
@@ -87,7 +87,7 @@ def main(args, loglevel):
       outfile.write( ", " )
       offset +=1
 
-  outfile.write("0 }")
+  outfile.write("0 };")
 
   outfile.write("\n\n#endif // _%s_\n" % outputFilename.upper().replace(".","_") )
   
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
   parser.add_argument( "-p",
                       "--prefix",
-                      default=""
+                      default="",
                       help = "Add a prefix to array names",
                       metavar = "ARG")
   args = parser.parse_args()
