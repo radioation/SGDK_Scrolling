@@ -135,15 +135,15 @@ if __name__ == '__main__':
   
   parser.add_argument( "-c",
                       "--column_start",
-                      default=1,
+                      default=0,
                       type=int,
-                      help = "First column to rotate",
+                      help = "First column to rotate (default 0)",
                       metavar = "ARG")
   parser.add_argument( "-C",
                       "--column_end",
-                      default=18,
+                      default=19,
                       type=int,
-                      help = "Last column to rotate",
+                      help = "Last column to rotate (default 19)",
                       metavar = "ARG")
   parser.add_argument( "-x",
                       "--center_x",
