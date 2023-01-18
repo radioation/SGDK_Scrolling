@@ -28,6 +28,8 @@ def main(args, loglevel):
   totalCols = colEnd - colStart +1 # inclusive total+1
 
   centerX = args.center_x
+  imageWidth = args.image_width
+  imageShift = -( imageWidth - 320) / 2;
 
   # default to all rows.
   rowStart = args.row_start
@@ -49,7 +51,14 @@ def main(args, loglevel):
   logging.info("Start angle: %f Stop angle: %f Step size: %f", minRot, maxRot, rotStep)
   logging.info("Columns to rotate: %d Center column: %d", totalCols, centerX)
   logging.info("Rows to rotate: %d Center row: %d", totalRows, centerY)
- 
+
+  print("#define ROWS_A %d" % totalRows )
+  print("#define START_ROW_A %d" % rowStart )
+  print("#define END_ROW_A %d" % rowEnd )
+  print("#define COLS_A %d" % totalCols )
+  print("#define START_COL_A %d" % colStart )
+  print("#define END_COL_A %d" % colEnd )
+
   # Check if file exists
   isFile = os.path.isfile( outputFilename )
   if isFile:
@@ -60,6 +69,7 @@ def main(args, loglevel):
   outfile = open( outputFilename, 'w')
   outfile.write("#ifndef _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.write("#define _%s_\n" % outputFilename.upper().replace(".","_") )
+  outfile.write("\n\n#define %s_SCROLL_COUNT %d\n" % ( prefix.upper().replace(".","_"), int(1+ (maxRot - minRot)/rotStep) )) 
   outfile.write("\n\ns16 %shScroll[] = {" % (prefix + "_") )
   # horizontal scrolling values
   offset = 0
@@ -67,7 +77,7 @@ def main(args, loglevel):
     rad = deg * math.pi/180; 
     outfile.write("\n  // rotation values for angle %f starts at %d\n" %( deg, offset) )
     for row in range( rowStart, rowEnd+1, ROW_HEIGHT ):
-      rowShift = (row-centerY) * math.sin( rad ) #  - rowStart 
+      rowShift = (row-centerY) * math.sin( rad ) + imageShift
       logging.debug("HSCROLL deg:%f row: %d scroll value:%d", deg, row, rowShift)
       outfile.write( str(round(rowShift)) )
       outfile.write( ", " )
@@ -137,11 +147,17 @@ if __name__ == '__main__':
                       metavar = "ARG")
   parser.add_argument( "-x",
                       "--center_x",
-                      default=10,
+                      default=9,
                       type=int,
                       help = "Which column is the center of rotation",
                       metavar = "ARG")
 
+  parser.add_argument( "-w",
+                      "--image_width",
+                      default=320,
+                      type=int,
+                      help = "Width of image to rotate",
+                      metavar = "ARG")
 
   parser.add_argument( "-r",
                       "--row_start",
