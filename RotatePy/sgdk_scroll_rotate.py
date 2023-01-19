@@ -2,7 +2,7 @@
 #!/usr/bin/env python
 #
 
-import os, argparse, logging
+import os, argparse, logging, csv
 import math
 import numpy as np
 
@@ -43,15 +43,38 @@ def main(args, loglevel):
   # naming the variables
   prefix =  args.prefix
 
+  # if defined, create an SGDK project skeleton
+  projectDir = args.project_directory
+
+  # (optional) points to rotate 
+  pointsFilename = args.points_filename
+  pointsToRotate = { }
+  isFile = os.path.isfile( pointsFilename )
+  if isFile:
+    with open( pointsFilename ) as csvFile:
+      csvReader = csv.reader( csvFile, delimiter=',')
+      for row in csvReader:
+        if len(row) >= 3 and row[1].isnumeric() and row[2].isnumeric():
+          newKey = row[0]
+          while newKey in  pointsToRotate:
+            newKey = row[0] + str(sn)
+            sn += 1
+          pointsToRotate[newKey] = ( float(row[1]), float(row[2]) )
+      print('found points to rotate:')
+      print( pointsToRotate )
+
+
   # Sega specific
   COL_WIDTH = 16   # 16 pixel width
   ROW_HEIGHT = 1   # rows are 1 pixel in height, might be plausible to do 8 for tiled?
 
+  
   logging.info("Parameters")
   logging.info("Start angle: %f Stop angle: %f Step size: %f", minRot, maxRot, rotStep)
   logging.info("Columns to rotate: %d Center column: %d", totalCols, centerX)
   logging.info("Rows to rotate: %d Center row: %d", totalRows, centerY)
 
+  # output C defines for colums and rows in 
   print("#define ROWS_A %d" % totalRows )
   print("#define START_ROW_A %d" % rowStart )
   print("#define END_ROW_A %d" % rowEnd )
@@ -59,7 +82,7 @@ def main(args, loglevel):
   print("#define START_COL_A %d" % colStart )
   print("#define END_COL_A %d" % colEnd )
 
-  # Check if file exists
+  # Check if file exists, exit to force user to make decision to delete isntead of just blowing it away.
   isFile = os.path.isfile( outputFilename )
   if isFile:
     print("File: %s exists! exiting", outputFilename)
@@ -98,6 +121,21 @@ def main(args, loglevel):
       offset +=1
 
   outfile.write("0 };")
+
+  if len(pointsToRotate) > 0:
+    # loop over again
+    for key, val in pointsToRotate.items():
+      outfile.write("\n\ns16 %s[] = {" % (key))
+      for deg in np.arange( minRot, maxRot + rotStep, rotStep ): # include end rot
+        rad = deg * math.pi/180; 
+        # Using real rotation but Y-flipped due to genesis coordinate system.
+        newX = centerX* 16 + ( val[0] + imageShift - centerX * 16) * math.cos(rad) - (centerY - val[1])  * math.sin(rad)
+        # find the column of current point
+        newY =  224 - ( centerY +   (val[0] + imageShift - centerX * 16) * math.sin(rad) + (centerY - val[1]) * math.cos(rad) )
+        outfile.write("\n %d, %d," % (round(newX), round(newY)))
+      outfile.write("0 };")
+
+
 
   outfile.write("\n\n#endif // _%s_\n" % outputFilename.upper().replace(".","_") )
   
@@ -184,11 +222,24 @@ if __name__ == '__main__':
                       help = "Output filename",
                       metavar = "ARG")
 
-  parser.add_argument( "-p",
+  parser.add_argument( "-P",
                       "--prefix",
                       default="",
                       help = "Add a prefix to array names",
                       metavar = "ARG")
+
+  parser.add_argument( "-p",
+                      "--project_directory",
+                      default="",
+                      help = "Create project directory with resource files and simple SGDK code.",
+                      metavar = "ARG")
+
+  parser.add_argument( "-t",
+                      "--points_filename",
+                      default="",
+                      help = "Specify CSV file with points to rotate along with bg",
+                      metavar = "ARG")
+
   args = parser.parse_args()
   
   # Setup logging
