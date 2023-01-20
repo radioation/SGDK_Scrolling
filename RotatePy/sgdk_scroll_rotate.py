@@ -169,10 +169,11 @@ def main(args, loglevel):
     for row in range( rowStart, rowEnd+1, ROW_HEIGHT ):
       rowShift = (row-centerY) * math.sin( rad ) + imageShift
       logging.debug("HSCROLL deg:%f row: %d scroll value:%d", deg, row, rowShift)
+      if offset > 0: 
+        outfile.write( ", " )
       outfile.write( str(round(rowShift)) )
-      outfile.write( ", " )
       offset +=1
-  outfile.write("0 };\n")
+  outfile.write("};\n")
     
   outfile.write("\n\ns16 %svScroll[] = {" % (prefix + "_"))
   offset = 0
@@ -183,14 +184,16 @@ def main(args, loglevel):
     for col in range( colStart, colEnd+1, 1 ):
       colShift =  16 * (col - centerX) * math.sin( rad )
       logging.debug("VSCROLL deg:%f col: %d scroll value:%d", deg, col, colShift)
+      if offset > 0: 
+        outfile.write( ", " )
       outfile.write( str(round(colShift)) )
-      outfile.write( ", " )
       offset +=1
-  outfile.write("0 };\n")
+  outfile.write("\n};\n")
 
   if len(pointsToRotate) > 0:
     # loop over again
     for key, val in pointsToRotate.items():
+      first = True
       outfile.write("\n\ns16 %s[] = {" % (key))
       for deg in np.arange( minRot, maxRot + rotStep, rotStep ): # include end rot
         rad = deg * math.pi/180; 
@@ -198,8 +201,13 @@ def main(args, loglevel):
         newX = centerX* 16 + ( val[0] + imageShift - centerX * 16) * math.cos(rad) - (centerY - val[1])  * math.sin(rad)
         # find the column of current point
         newY =  224 - ( centerY +   (val[0] + imageShift - centerX * 16) * math.sin(rad) + (centerY - val[1]) * math.cos(rad) )
-        outfile.write("\n %d, %d," % (round(newX), round(newY)))
-      outfile.write("0 };")
+        if not first:
+          outfile.write( ", " )
+        else:
+          first = False;
+
+        outfile.write("\n %d, %d" % (round(newX), round(newY)))
+      outfile.write("\n};")
 
 
   outfile.write("\n\n#endif // _%s_\n" % outputFilename.upper().replace(".","_") )
