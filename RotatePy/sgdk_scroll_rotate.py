@@ -5,7 +5,58 @@
 import os, argparse, logging, csv
 import math
 import numpy as np
+from jinja2 import Template
+import shutil
+from pathlib import Path
 
+def makeProjectFiles(destDir, rowStart, rowEnd, totalRows, colStart, colEnd, totalCols, centerY, prefixStr, backgroundName, spriteName, targetList, outputFilename ):
+  # make resource dir and rescomp file
+  srcFolder = destDir + "/src"
+  if not os.path.exists(srcFolder):
+    os.makedirs(srcFolder)
+  resFolder = destDir + "/res"
+  if not os.path.exists(resFolder):
+    os.makedirs(resFolder)
+  bgFolder = resFolder + "/bg"
+  if not os.path.exists(bgFolder):
+    os.makedirs(bgFolder)
+  spritesFolder = resFolder + "/sprites"
+  if not os.path.exists(spritesFolder):
+    os.makedirs(spritesFolder)
+
+  # Copy files to resource folders
+  shutil.copy( backgroundName + str(".png"), bgFolder )
+  shutil.copy( spriteName + str(".png"), spritesFolder )
+  shutil.copyfile( outputFilename, resFolder + "/" + outputFilename )
+
+  # Make resources file from template
+  with open('resources.res.jinja') as resFile:
+    resTemp = Template( resFile.read() )
+    with open( resFolder + "/resources.res", 'w') as outRes:
+      outRes.write( resTemp.render(
+        bg_name = backgroundName,
+        sprite_name = spriteName
+        ))
+
+  # Make main.c file from template
+  with open('main.c.jinja') as srcFile:
+    srcTemp = Template( srcFile.read() )
+    with open( srcFolder + "/main.c", 'w') as outSrc:
+      outSrc.write( srcTemp.render(
+        rotation_filename = outputFilename,
+        start_row_a = rowStart,
+        end_row_a = rowEnd,
+        rows_a = totalRows,
+        start_col_a = colStart,
+        end_col_a = colEnd,
+        cols_a = totalCols,
+        prefix = prefixStr,
+        bg_name = backgroundName,
+        sprite_name = spriteName,
+        target_list = targetList
+        ))
+
+   
 def main(args, loglevel):
   logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
   
@@ -63,6 +114,22 @@ def main(args, loglevel):
       print('found points to rotate:')
       print( pointsToRotate )
 
+  backgroundFilename = args.background_filename
+  backgroundName = ''
+  if os.path.isfile( backgroundFilename ):
+    backgroundName = Path( backgroundFilename ).stem
+  else:
+    print('Unable to find ' + backgroundFilename)
+    return
+  
+  spriteFilename = args.sprite_filename
+  spriteName = ''
+  if os.path.isfile( spriteFilename ):
+    spriteName = Path( spriteFilename ).stem
+  else:
+    print('Unable to find ' + spriteFilename)
+    return
+  
 
   # Sega specific
   COL_WIDTH = 16   # 16 pixel width
@@ -85,7 +152,7 @@ def main(args, loglevel):
   # Check if file exists, exit to force user to make decision to delete isntead of just blowing it away.
   isFile = os.path.isfile( outputFilename )
   if isFile:
-    print("File: %s exists! exiting", outputFilename)
+    print("File: %s exists! exiting" % outputFilename)
     return
 
   # open file
@@ -105,7 +172,7 @@ def main(args, loglevel):
       outfile.write( str(round(rowShift)) )
       outfile.write( ", " )
       offset +=1
-  outfile.write("0 };")
+  outfile.write("0 };\n")
     
   outfile.write("\n\ns16 %svScroll[] = {" % (prefix + "_"))
   offset = 0
@@ -119,8 +186,7 @@ def main(args, loglevel):
       outfile.write( str(round(colShift)) )
       outfile.write( ", " )
       offset +=1
-
-  outfile.write("0 };")
+  outfile.write("0 };\n")
 
   if len(pointsToRotate) > 0:
     # loop over again
@@ -136,8 +202,11 @@ def main(args, loglevel):
       outfile.write("0 };")
 
 
-
   outfile.write("\n\n#endif // _%s_\n" % outputFilename.upper().replace(".","_") )
+  outfile.close()
+
+  if len(projectDir) > 0:
+    makeProjectFiles(projectDir, rowStart, rowEnd, totalRows, colStart, colEnd, totalCols, centerY, prefix, backgroundName, spriteName, pointsToRotate.keys(), outputFilename )
   
  
 # Standard boilerplate to call the main() function to begin
@@ -238,6 +307,18 @@ if __name__ == '__main__':
                       "--points_filename",
                       default="",
                       help = "Specify CSV file with points to rotate along with bg",
+                      metavar = "ARG")
+
+  parser.add_argument( "-b",
+                      "--background_filename",
+                      default="ship.png",
+                      help = "Specify background image",
+                      metavar = "ARG")
+
+  parser.add_argument( "-S",
+                      "--sprite_filename",
+                      default="crosshairs.png",
+                      help = "Specify target sprite image",
                       metavar = "ARG")
 
   args = parser.parse_args()
