@@ -6,6 +6,8 @@ import math
 from PIL import Image, ImageDraw
 import cv2
 import shutil
+from jinja2 import Template
+from pathlib import Path
 
 def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow ):
   # make resource dir and rescomp file
@@ -23,32 +25,27 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
   shutil.copy( imageFilename, bgFolder )
 
   # Make resource file
-  resfile = open( resFolder + "/resources.res", 'w')
-  fname = os.path.basename( imageFilename )
-  resfile.write('image plane_b "bg/%s" 0\n'% fname )
-  resfile.write('PALETTE plane_b_pal "bg/%s"\n' % fname )
-  resfile.close()
+  fname = Path( imageFilename ).stem
+  # Make resources file from template
+  with open('resources.res.jinja') as resFile:
+    resTemp = Template( resFile.read() )
+    with open( resFolder + "/resources.res", 'w') as outRes:
+      outRes.write( resTemp.render(
+        bg_name = fname
+        ))
 
-  # make bare source file with some scrolling
-  srcfile = open( srcFolder + "/main.c", 'w')
-  srcfile.write('#include <genesis.h>\n')
-  srcfile.write('#include "resources.h"\n\n')
-  srcfile.write('s16 hScrollB[224];\n')
-  srcfile.write('fix32 fscroll[224];\n')
-  srcfile.write('s16 scrollStep = 0;\n\n')
-
-  srcfile.write('static void scrollLeft() {\n')
-  srcfile.write('  ++scrollStep;\n')
-  srcfile.write('  if (scrollStep < %d) {\n' % farPolyWidth )
-
+  # Make main.c file from template
+  scrollLeftList=[]
   scrollCeilingRows = endCeilingRow - startCeilingRow
   scrollCeilingRatio = nearPolyWidth / farPolyWidth 
   scrollCeilingRowStep = 0
   scrollCeilingIncrement = 1.0
+
   if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
     scrollCeilingRowStep = ( scrollCeilingRatio - 1.0 ) / scrollCeilingRows
     for r in range( endCeilingRow, startCeilingRow - 1, -1):
-      srcfile.write( "    fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollCeilingIncrement ) )
+      #srcfile.write( "    fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollCeilingIncrement ) )
+      scrollLeftList.append( (r, scrollCeilingIncrement ) )
       scrollCeilingIncrement += scrollCeilingRowStep
 
 
@@ -57,75 +54,55 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
   scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
   scrollIncrement = 1.0;
   for r in range( startRow, endRow + 1, 1):
-    srcfile.write( "    fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollIncrement ) )
+    ##srcfile.write( "    fscroll[%d] = fix32Sub( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollIncrement ) )
+    scrollLeftList.append( (r, scrollIncrement ) )
     scrollIncrement += scrollRowStep
-  srcfile.write('  } else {\n')
-  srcfile.write('    scrollStep = 0;\n    memset(fscroll, 0, sizeof(fscroll));\n')
-  srcfile.write('  }\n}\n\n')
+  
 
-
-  srcfile.write('static void scrollRight() {\n')
-  srcfile.write('  --scrollStep;\n')
-  srcfile.write('  if (scrollStep >= 0) {\n')
-
+  scrollRightList = []
   if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
     scrollCeilingIncrement = 1.0
     scrollCeilingRowStep = ( scrollCeilingRatio - 1.0 ) / scrollCeilingRows
     for r in range( endCeilingRow, startCeilingRow - 1, -1):
-      srcfile.write( "    fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollCeilingIncrement ) )
+      #srcfile.write( "    fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollCeilingIncrement ) )
+      scrollRightList.append( (r, scrollCeilingIncrement ) )
       scrollCeilingIncrement += scrollCeilingRowStep
-
-
   scrollIncrement = 1.0;
   for r in range( startRow, endRow + 1, 1):
-    srcfile.write( "    fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollIncrement ) )
+    #srcfile.write( "    fscroll[%d] = fix32Add( fscroll[%d], FIX32(%.3f));\n" % ( r, r, scrollIncrement ) )
+    scrollRightList.append( (r, scrollIncrement ) )
     scrollIncrement += scrollRowStep
-  srcfile.write('  } else {\n')
-  srcfile.write('    scrollStep = %d;\n'% int(farPolyWidth) )
+
+  scrollRightResetList = []
 
   if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
     scroll = - int( farPolyWidth)
     scrollStep =  (nearPolyWidth - farPolyWidth) / scrollCeilingRows
     for r in range( endCeilingRow, startCeilingRow , -1):
-      srcfile.write( "    fscroll[%d] = FIX32(%.3f);\n" % ( r, scroll ) )
+      #srcfile.write( "    fscroll[%d] = FIX32(%.3f);\n" % ( r, scroll ) )
+      scrollRightResetList.append( (r, scroll ) )
       scroll -= scrollStep
 
   scroll = - int( farPolyWidth)
   finalScrollStep =  (nearPolyWidth - farPolyWidth) / scrollRows
   for r in range( startRow, endRow + 1, 1):
-    srcfile.write( "    fscroll[%d] = FIX32(%.3f);\n" % ( r, scroll ) )
+    #srcfile.write( "    fscroll[%d] = FIX32(%.3f);\n" % ( r, scroll ) )
+    scrollRightResetList.append( (r, scroll ) )
     scroll -= finalScrollStep
-  srcfile.write('  }\n}\n\n')
 
-  srcfile.write("""int main(bool hard)
-{
-  memset(hScrollB, 0, sizeof(hScrollB));
-  memset(fscroll, 0, sizeof(fscroll));
-  VDP_setScreenWidth320();
 
-  PAL_setPalette(PAL0, plane_b_pal.data, CPU);
-  PAL_setColor(0, 0x0000);
-  // set scrolling modes to support fake rotation
-  VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_PLANE);
+  with open('main.c.jinja') as srcFile:
+    srcTemp = Template( srcFile.read() )
+    with open( srcFolder + "/main.c", 'w') as outSrc:
+      outSrc.write( srcTemp.render(
+        bg_name = fname,
+        far_width = farPolyWidth,
+        scroll_left_list = scrollLeftList,
+        scroll_right_list = scrollRightList,
+        scroll_right_reset_list = scrollRightResetList,
 
-  // get initial tile position in VRAM
-  int ind = TILE_USER_INDEX;
-  int indexB = ind;
-  VDP_loadTileSet(plane_b.tileset, indexB, CPU);
-  VDP_drawImageEx(BG_B, &plane_b, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, indexB), 0, 0, FALSE, TRUE);
+        ))
 
-  while (TRUE)
-  {
-    scrollLeft();
-    for (int i = 0; i < 224; i++) // Not very efficient.  
-    {
-      hScrollB[i] = fix32ToInt(fscroll[i]);
-    }
-    VDP_setHorizontalScrollLine(BG_B, 0, hScrollB, 224, DMA);
-    SYS_doVBlankProcess();
-  }
-}""")
-  srcfile.close()
 
 def main(args, loglevel):
   logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)

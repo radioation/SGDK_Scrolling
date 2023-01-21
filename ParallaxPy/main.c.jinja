@@ -1,0 +1,65 @@
+#include <genesis.h>
+#include "resources.h"
+
+s16 hScrollB[224];
+fix32 fscroll[224];
+s16 scrollStep = 0;
+
+static void scrollLeft() {
+  ++scrollStep;
+  if (scrollStep < {{ far_width|int }} ) {
+{% for scrollvals in scroll_left_list %}
+    fscroll[{{scrollvals[0]}}] = fix32Sub( fscroll[{{scrollvals[0]}}], FIX32( {{'%0.3f' % scrollvals[1]|float }} ) );
+{%- endfor %}
+  } else {
+    scrollStep = 0;
+    memset(fscroll, 0, sizeof(fscroll));
+  }
+}
+
+static void scrollRight() {
+  --scrollStep;
+  if (scrollStep >= 0) {
+{% for scrollvals in scroll_right_list %}
+    fscroll[{{scrollvals[0]}}] = fix32Add( fscroll[{{scrollvals[0]}}], FIX32( {{'%0.3f' % scrollvals[1]|float }} ) );
+{%- endfor %}
+
+  } else {
+    scrollStep = {{ far_width|int }};
+{% for scrollvals in scroll_right_reset_list %}
+    fscroll[{{scrollvals[0]}}] =  FIX32({{ '%0.3f' % scrollvals[1]|float }});
+{%- endfor %}
+  }
+}
+
+int main(bool hard)
+{
+  memset(hScrollB, 0, sizeof(hScrollB));
+  memset(fscroll, 0, sizeof(fscroll));
+  VDP_setScreenWidth320();
+
+  PAL_setPalette(PAL0, {{ bg_name }}_pal.data, CPU);
+  PAL_setColor(0, 0x0000);
+  // set scrolling modes to support line scrolling.
+  VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_PLANE);
+
+  // get initial tile position in VRAM and load image
+  int ind = TILE_USER_INDEX;
+  int indexB = ind;
+  VDP_loadTileSet({{ bg_name }}.tileset, indexB, CPU);
+  VDP_drawImageEx(BG_B, &{{ bg_name }}, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, indexB), 0, 0, FALSE, TRUE);
+
+  while (TRUE)
+  {
+    scrollLeft();
+    //scrollRight();
+    for (int i = 0; i < 224; i++) // Not very efficient, but works for a demo
+    {
+      hScrollB[i] = fix32ToInt(fscroll[i]);
+    }
+    VDP_setHorizontalScrollLine(BG_B, 0, hScrollB, 224, DMA);
+    SYS_doVBlankProcess();
+  }
+}
+
+
