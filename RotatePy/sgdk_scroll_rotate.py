@@ -27,7 +27,7 @@ def makeProjectFiles(destDir, rowStart, rowEnd, totalRows, colStart, colEnd, tot
   # Copy files to resource folders
   shutil.copy( backgroundName + str(".png"), bgFolder )
   shutil.copy( spriteName + str(".png"), spritesFolder )
-  shutil.copyfile( outputFilename, resFolder + "/" + outputFilename )
+  shutil.copy( outputFilename, srcFolder + "/" + outputFilename )
 
   # Make resources file from template
   with open('resources.res.jinja') as resFile:
@@ -160,6 +160,12 @@ def main(args, loglevel):
   outfile.write("#ifndef _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.write("#define _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.write("\n\n#define %s_SCROLL_COUNT %d\n" % ( prefix.upper().replace(".","_"), int(1+ (maxRot - minRot)/rotStep) )) 
+  outfile.write("#define ROWS_A %d\n" % totalRows )
+  outfile.write("#define START_ROW_A %d\n" % rowStart )
+  outfile.write("#define END_ROW_A %d\n" % rowEnd )
+  outfile.write("#define COLS_A %d\n" % totalCols )
+  outfile.write("#define START_COL_A %d\n" % colStart )
+  outfile.write("#define END_COL_A %d\n" % colEnd )
   outfile.write("\n\ns16 %shScroll[] = {" % (prefix + "_") )
   # horizontal scrolling values
   offset = 0
@@ -311,16 +317,16 @@ if __name__ == '__main__':
                       help = "Create project directory with resource files and simple SGDK code.",
                       metavar = "ARG")
 
-  parser.add_argument( "-t",
-                      "--points_filename",
-                      default="",
-                      help = "Specify CSV file with points to rotate along with bg",
-                      metavar = "ARG")
-
   parser.add_argument( "-b",
                       "--background_filename",
                       default="ship.png",
                       help = "Specify background image",
+                      metavar = "ARG")
+
+  parser.add_argument( "-t",
+                      "--points_filename",
+                      default="",
+                      help = "Specify CSV file with points to rotate along with bg",
                       metavar = "ARG")
 
   parser.add_argument( "-S",

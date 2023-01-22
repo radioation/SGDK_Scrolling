@@ -6,20 +6,9 @@
 // Scrolling Stuff
 #define PLANE_MAX_TILE 64
 
-#define ROWS_A {{ rows_a }}
-#define START_ROW_A {{ start_row_a }}
-#define END_ROW_A {{ end_row_a }}
-
-#define COLS_A {{ cols_a }}
-#define START_COL_A {{ start_col_a }}
-#define END_COL_A {{ start_col_b }} 
-
-extern s16 {{ prefix }}_hScroll[];
-extern s16 {{ prefix }}_vScroll[];
 
 s16 hScrollA[224];
 s16 vScrollA[20];
-
 
 int main(bool hard)
 {
@@ -57,14 +46,17 @@ int main(bool hard)
   s16 yOffsetDir = 1;
   u8 offsetDelay = 0;
 
+{% if target_list|length > 0 %}
   SPR_init();
+{% endif %}
+
 
 {% for name in target_list %}
   Sprite * {{name}}_sprite = NULL;
   int {{name}}_pos_x = {{name}}[currAngle*2]-8;
   int {{name}}_pos_y = {{name}}[currAngle*2+1]-8;
   {{name}}_sprite = SPR_addSprite( &crosshairs, {{name}}_pos_x, {{name}}_pos_y,  TILE_ATTR( PAL1, 1, FALSE, FALSE ));
- {% endfor %}
+{% endfor %}
 
   while (TRUE)
   {
@@ -73,7 +65,7 @@ int main(bool hard)
     ++angleDelay;
     if( angleDelay % 6 == 0 ) {
       currAngle += stepDir;
-      if( currAngle >= SHIP_SCROLL_COUNT-2 ) {
+      if( currAngle >= {{ prefix }}_SCROLL_COUNT-2 ) {
         stepDir = -1;
         currAngle = 9;
       }else if (currAngle <0+2 ) {
@@ -112,7 +104,9 @@ int main(bool hard)
     SPR_setPosition({{name}}_sprite, {{name}}_pos_x, {{name}}_pos_y);
 {% endfor %}
 
+{% if target_list|length > 0 %}
     SPR_update();
+{% endif %}
 
     // set SGDK scrolling functions to fake the rotaiton.
     VDP_setHorizontalScrollLine(BG_A, START_ROW_A - yOffset, hScrollA, ROWS_A, DMA);
