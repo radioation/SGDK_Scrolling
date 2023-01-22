@@ -103,7 +103,7 @@ def main(args, loglevel):
         imageWidth = imWidth
     else:
       # if we're not, assume 320
-      imageWidth = imWidth
+      imageWidth = 320
 
 
 
