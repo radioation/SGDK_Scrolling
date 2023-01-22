@@ -109,7 +109,13 @@ int main(bool hard)
 {% endif %}
 
     // set SGDK scrolling functions to fake the rotaiton.
-    VDP_setHorizontalScrollLine(BG_A, START_ROW_A - yOffset, hScrollA, ROWS_A, DMA);
+    s16 startHorizontalScroll = START_ROW_A - yOffset;
+    s16 totalRows = ROWS_A ;
+    if( startHorizontalScroll < 0 ) {
+      totalRows = ROWS_A + startHorizontalScroll;
+      startHorizontalScroll = 0;
+    }
+    VDP_setHorizontalScrollLine(BG_A, startHorizontalScroll, hScrollA, totalRows, DMA);
     VDP_setVerticalScrollTile(BG_A, START_COL_A, vScrollA, COLS_A, DMA);
 
     // let SGDK do its thing

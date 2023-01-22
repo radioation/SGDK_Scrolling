@@ -8,6 +8,8 @@ import numpy as np
 from jinja2 import Template
 import shutil
 from pathlib import Path
+from PIL import Image
+
 
 def makeProjectFiles(destDir, rowStart, rowEnd, totalRows, colStart, colEnd, totalCols, centerY, prefixStr, backgroundName, spriteName, targetList, outputFilename ):
   # make resource dir and rescomp file
@@ -79,7 +81,32 @@ def main(args, loglevel):
   totalCols = colEnd - colStart +1 # inclusive total+1
 
   centerX = args.center_x
-  imageWidth = args.image_width
+
+  # check background image size if not specified and we're making a project dir
+  projectDir = args.project_directory
+  backgroundFilename = args.background_filename
+  backgroundName = ''
+  if os.path.isfile( backgroundFilename ):
+    backgroundName = Path( backgroundFilename ).stem
+  else:
+    print('Unable to find ' + backgroundFilename)
+    return
+
+  if args.image_width:
+    imageWidth = args.image_width
+  else:
+    # if we're creating a project, get the width from the image
+    if len(projectDir) > 0 and len(backgroundFilename) > 0 :
+      im = Image.open( backgroundFilename ) 
+      imWidth, imHeight = im.size
+      if( imWidth > 0 ):
+        imageWidth = imWidth
+    else:
+      # if we're not, assume 320
+      imageWidth = imWidth
+
+
+
   imageShift = -( imageWidth - 320) / 2;
 
   # default to all rows.
@@ -94,8 +121,6 @@ def main(args, loglevel):
   # naming the variables
   prefix =  args.prefix
 
-  # if defined, create an SGDK project skeleton
-  projectDir = args.project_directory
 
   # (optional) points to rotate 
   pointsFilename = args.points_filename
@@ -114,13 +139,6 @@ def main(args, loglevel):
       print('found points to rotate:')
       print( pointsToRotate )
 
-  backgroundFilename = args.background_filename
-  backgroundName = ''
-  if os.path.isfile( backgroundFilename ):
-    backgroundName = Path( backgroundFilename ).stem
-  else:
-    print('Unable to find ' + backgroundFilename)
-    return
   
   spriteFilename = args.sprite_filename
   spriteName = ''
@@ -219,6 +237,7 @@ def main(args, loglevel):
   outfile.write("\n\n#endif // _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.close()
 
+  # if defined, create an SGDK project skeleton
   if len(projectDir) > 0:
     makeProjectFiles(projectDir, rowStart, rowEnd, totalRows, colStart, colEnd, totalCols, centerY, prefix, backgroundName, spriteName, pointsToRotate.keys(), outputFilename )
   
@@ -275,7 +294,7 @@ if __name__ == '__main__':
 
   parser.add_argument( "-w",
                       "--image_width",
-                      default=320,
+                      #default=320,
                       type=int,
                       help = "Width of image to rotate",
                       metavar = "ARG")
