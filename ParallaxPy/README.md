@@ -24,7 +24,7 @@ script is very low priority.  I may never get around to the rest of it.
 
 ## Dependencies
 The script was written for [Python3](https://www.python.org/downloads/) and requires 
-[numpy](https://numpy.org/), [PILLOW](https://python-pillow.org/), and 
+[NumPy](https://numpy.org/), [PILLOW](https://python-pillow.org/), and 
 [OpenCV](https://opencv.org/).
 
 I'm using WSL and Ubuntu 22.02 on my development machine, but I imagine 
