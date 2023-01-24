@@ -108,12 +108,31 @@ def main(args, loglevel):
   logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
   startRow = args.start_row
   endRow = args.end_row
+  if startRow == endRow: 
+    print("Start and end row of floor must differ")
+    return
+  elif startRow > endRow:
+    temp = endRow
+    endRow = startRow
+    startRow = temp
 
+    
   startCeilingRow = args.start_ceiling_row
   endCeilingRow =  args.end_ceiling_row
+  if startCeilingRow == endCeilingRow and startCeilingRow > 0: 
+    print("Start and end row of ceiling must differ")
+    return
+  elif startCeilingRow > endCeilingRow:
+    temp = endCeilingRow
+    endCeilingRow = startCeilingRow
+    startCeilingRow = temp
 
   farImageReps = args.far_image_reps
   nearImageReps = args.near_image_reps
+  if farImageReps <= nearImageReps:
+    print("Far image reps must be larger than near image reps")
+    return
+
 
   imageFilename =  args.input_filename
 
@@ -151,12 +170,15 @@ def main(args, loglevel):
     scrollCeilingRows = endCeilingRow - startCeilingRow
     scrollCeilingRatio = nearPolyWidth / farPolyWidth 
     scrollCeilingRowStep = ( scrollCeilingRatio - 1.0 ) / scrollCeilingRows
-    print("Scroll increment ceiling: %.4f" % scrollCeilingRowStep)
+    print("* Scroll increment ceiling: %.4f" % scrollCeilingRowStep)
 
 
   bottomTotalWidth = nearPolyWidth * farImageReps
   offset = farImageReps % 2 != nearImageReps % 2
   outputCols = int(COLS + nearPolyWidth)
+  # must be multiple of 8 for tile breakdown
+  if outputCols % 8 > 0:
+    outputCols = (int( outputCols/8) +1) * 8
 
   print("Image size %d x %d" % ( outputCols,rows ) )
 
@@ -205,7 +227,7 @@ def main(args, loglevel):
       tmpCv[maskCv, :] = warpCv[maskCv, :]
    
     # check if ceilng was set.
-    if startCeilingRow > 0 and endCeilingRow > 0:
+    if startCeilingRow >= 0 and endCeilingRow > 0:
       ceilFilename = imageCeilingFilename if len(imageCeilingFilename) > 0 else imageFilename
       with Image.open( ceilFilename ) as ceil:
         inputCeilingImg = ceil.convert('RGB')
@@ -275,14 +297,14 @@ if __name__ == '__main__':
       "--far_image_reps",
       default = 4,
       type=int,
-      help = "How many times to repeat image at far side of floor",
+      help = "How many times to repeat image at far side of the floor/ceiling",
       metavar = "ARG")
 
   parser.add_argument( "-n",
       "--near_image_reps",
       default = 2,
       type=int,
-      help = "How many times to repeat image at near side of floor",
+      help = "How many times to repeat image at near side of the floor/ceiling",
       metavar = "ARG")
 
   parser.add_argument( "-s",

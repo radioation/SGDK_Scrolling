@@ -12,7 +12,6 @@ The script has some rough edges, but does what I needed it to.  There are
 some obvious things that could be improved:
 
 * Check input values for invalid combinations
-* Handle odd numbers for repeating pattern
 * Blend pixels at edges of warp pattern (or sample images instead of 
   using OpenCV's warp)
 * Generate code with user configurable scrolling step sizes 
