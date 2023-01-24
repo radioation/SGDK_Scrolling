@@ -217,7 +217,8 @@ def main(args, loglevel):
       image_size = (tmpCv.shape[1], tmpCv.shape[0])
       warpCv = cv2.warpPerspective(inputCv, xfrmMatrix, dsize=image_size)
       warpImg = Image.fromarray( warpCv )
-      #warpImg.save( "warp_%d.png" %(rep) )
+      if args.output_warped_images:
+        warpImg.save( "warped_floor_%d.png" %(rep) )
 
       ## create a copy mask 
       maskCv = np.zeros_like(tmpCv)
@@ -258,7 +259,8 @@ def main(args, loglevel):
           image_size = (tmpCv.shape[1], tmpCv.shape[0])
           warpCv = cv2.warpPerspective(inputCeilingCv, xfrmMatrix, dsize=image_size)
           warpImg = Image.fromarray( warpCv )
-          #warpImg.save( "warp_ceil_%d.png" %(rep) )
+          if args.output_warped_images:
+            warpImg.save( "warped_ceil_%d.png" %(rep) )
           
           ## create a copy mask 
           maskCv = np.zeros_like(tmpCv)
@@ -360,6 +362,12 @@ if __name__ == '__main__':
       default = '',
       help = "Create project directory with resource files and simple SGDK code.",
       metavar = "ARG")
+
+  parser.add_argument(
+      "-w",
+      "--output_warped_images",
+      help="Output warped images used to create final image.",
+      action="store_true")
 
   args = parser.parse_args()
 
