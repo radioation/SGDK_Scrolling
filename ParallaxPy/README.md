@@ -36,6 +36,7 @@ I have installed the windows versions to test the script.
 pip3 install numpy
 pip3 install pillow
 pip3 install opencv-python
+pip3 install jinja2
 ```
 3. Run the script with:
 ```cmd
