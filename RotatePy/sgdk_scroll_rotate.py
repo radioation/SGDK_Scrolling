@@ -177,7 +177,7 @@ def main(args, loglevel):
   outfile = open( outputFilename, 'w')
   outfile.write("#ifndef _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.write("#define _%s_\n" % outputFilename.upper().replace(".","_") )
-  outfile.write("\n\n#define %s_SCROLL_COUNT %d\n" % ( prefix.upper().replace(".","_"), int(1+ (maxRot - minRot)/rotStep) )) 
+  outfile.write("\n\n#define %s_SCROLL_COUNT %d\n" % ( prefix.replace(".","_"), int(1+ (maxRot - minRot)/rotStep) )) 
   outfile.write("#define ROWS_A %d\n" % totalRows )
   outfile.write("#define START_ROW_A %d\n" % rowStart )
   outfile.write("#define END_ROW_A %d\n" % rowEnd )
