@@ -90,12 +90,12 @@ int main(bool hard)
 
 
     // could unroll loops to eliminate some overhead
-    for(int i=0; i < ROWS_A; ++i ) {
-      hScrollA[ i ] = {{ prefix }}_hScroll[ currAngle * ROWS_A + i] + xOffset;
+    for(int i=0; i < {{ prefix }}_ROWS_A; ++i ) {
+      hScrollA[ i ] = {{ prefix }}_hScroll[ currAngle * {{ prefix }}_ROWS_A + i] + xOffset;
     }
-    for (int i = 0; i < COLS_A; ++i)
+    for (int i = 0; i < {{prefix}}_COLS_A; ++i)
     {
-      vScrollA[i] = {{ prefix }}_vScroll[currAngle * COLS_A + i] + yOffset;
+      vScrollA[i] = {{ prefix }}_vScroll[currAngle * {{prefix}}_COLS_A + i] + yOffset;
     }
 
 {% for name in target_list %}
@@ -109,14 +109,14 @@ int main(bool hard)
 {% endif %}
 
     // set SGDK scrolling functions to fake the rotaiton.
-    s16 startHorizontalScroll = START_ROW_A - yOffset;
-    s16 totalRows = ROWS_A ;
+    s16 startHorizontalScroll = {{ prefix }}_START_ROW_A - yOffset;
+    s16 totalRows = {{ prefix }}_ROWS_A ;
     if( startHorizontalScroll < 0 ) {
-      totalRows = ROWS_A + startHorizontalScroll;
+      totalRows = {{ prefix }}_ROWS_A + startHorizontalScroll;
       startHorizontalScroll = 0;
     }
     VDP_setHorizontalScrollLine(BG_A, startHorizontalScroll, hScrollA, totalRows, DMA);
-    VDP_setVerticalScrollTile(BG_A, START_COL_A, vScrollA, COLS_A, DMA);
+    VDP_setVerticalScrollTile(BG_A, {{ prefix }}_START_COL_A, vScrollA, {{prefix}}_COLS_A, DMA);
 
     // let SGDK do its thing
     SYS_doVBlankProcess();

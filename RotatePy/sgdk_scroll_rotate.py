@@ -178,13 +178,13 @@ def main(args, loglevel):
   outfile.write("#ifndef _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.write("#define _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.write("\n\n#define %s_SCROLL_COUNT %d\n" % ( prefix.replace(".","_"), int(1+ (maxRot - minRot)/rotStep) )) 
-  outfile.write("#define ROWS_A %d\n" % totalRows )
-  outfile.write("#define START_ROW_A %d\n" % rowStart )
-  outfile.write("#define END_ROW_A %d\n" % rowEnd )
-  outfile.write("#define COLS_A %d\n" % totalCols )
-  outfile.write("#define START_COL_A %d\n" % colStart )
-  outfile.write("#define END_COL_A %d\n" % colEnd )
-  outfile.write("\n\ns16 %shScroll[] = {" % (prefix + "_") )
+  outfile.write("#define %s_ROWS_A %d\n" % (prefix, totalRows ))
+  outfile.write("#define %s_START_ROW_A %d\n" % (prefix, rowStart ))
+  outfile.write("#define %s_END_ROW_A %d\n" % (prefix, rowEnd ))
+  outfile.write("#define %s_COLS_A %d\n" % (prefix, totalCols ))
+  outfile.write("#define %s_START_COL_A %d\n" % (prefix, colStart ))
+  outfile.write("#define %s_END_COL_A %d\n" % (prefix, colEnd ))
+  outfile.write("\n\ns16 %s_hScroll[] = {" % (prefix ) )
   # horizontal scrolling values
   offset = 0
   for deg in np.arange( minRot, maxRot + rotStep, rotStep ): # include end rot
