@@ -388,7 +388,6 @@ int main(bool hard)
 
 	while (TRUE)
 	{
-		/*
 		if (delay !=1 )
 		{
 			s16 angle =  upperAngles[upperAnglePos];
@@ -440,7 +439,6 @@ int main(bool hard)
 		{
 			delay = 0;
 		}
-		*/
 
 		// scroll the asteroids in BG_B
 		for (int i = 0; i < 20; i++)
