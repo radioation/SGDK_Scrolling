@@ -223,8 +223,8 @@ def main(args, loglevel):
         rad = deg * math.pi/180; 
         # Using real rotation but Y-flipped due to genesis coordinate system.
         newX = centerX* 16 + ( val[0] + imageShift - centerX * 16) * math.cos(rad) - (centerY - val[1])  * math.sin(rad)
-        # find the column of current point
-        newY =  224 - ( centerY +   (val[0] + imageShift - centerX * 16) * math.sin(rad) + (centerY - val[1]) * math.cos(rad) )
+        # find the row current point from y = x sin(theta) + y cos (theta)
+        newY =   centerY - (  ((val[0] + imageShift - centerX * 16) * math.sin(rad) ) + ((centerY - val[1]) * math.cos(rad) ) )
         if not first:
           outfile.write( ", " )
         else:
