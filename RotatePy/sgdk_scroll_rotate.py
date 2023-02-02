@@ -130,12 +130,12 @@ def main(args, loglevel):
     with open( pointsFilename ) as csvFile:
       csvReader = csv.reader( csvFile, delimiter=',')
       for row in csvReader:
-        if len(row) >= 3 and row[1].isnumeric() and row[2].isnumeric():
+        if len(row) >= 3 and row[1].strip().isnumeric() and row[2].strip().isnumeric():
           newKey = row[0]
           while newKey in  pointsToRotate:
             newKey = row[0] + str(sn)
             sn += 1
-          pointsToRotate[newKey] = ( float(row[1]), float(row[2]) )
+          pointsToRotate[newKey] = ( float(row[1].strip()), float(row[2].strip()) )
       print('found points to rotate:')
       print( pointsToRotate )
 
