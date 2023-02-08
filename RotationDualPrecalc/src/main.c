@@ -354,8 +354,6 @@ int main(bool hard)
     // set SGDK scrolling functions to fake the rotation.
     VDP_setHorizontalScrollLine(BG_A, 0, hScrollA, 224, DMA);
 
-
-
     // scroll the asteroids in BG_B
     for (int i = 0; i < 20; i++)
     {
