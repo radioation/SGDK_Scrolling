@@ -1,6 +1,6 @@
-# Parallax Image Generation Script
+# Endless Scroll Image Generation Script
 
-`sgdk_parallax_image.py` is a simple Python script that creates endless
+`sgdk_endless_scroll.py` is a simple Python script that creates endless
 scrolling images for use with Sega Genesis / SGDK.  You must supply at least
 one 16-color indexed image to be warped into a repeating floor pattern.  The
 generated image can optionally have a ceiling pattern.  The ceiling  can use
@@ -40,13 +40,13 @@ pip3 install jinja2
 ```
 3. Run the script with:
 ```cmd
-python3 sgdk_parallax_image.py
+python3 sgdk_endless_scroll.py
 ```
 
 # Basic usage
 
 ```bash
-usage: sgdk_parallax_image.py [-h] [-v] [-f ARG] [-n ARG] [-s ARG] [-e ARG]
+usage: sgdk_endless_scroll.py [-h] [-v] [-f ARG] [-n ARG] [-s ARG] [-e ARG]
                               [-i ARG] [-S ARG] [-E ARG] [-I ARG] [-o ARG]
                               [-p ARG]
 
@@ -83,7 +83,7 @@ The default behavior is to take an input image named "image.png" and repeated
 it twice at the bottom row of the image (row 223) and four times at the top of
 the floor pattern (row 80).  Type 
 ```bash 
-python3 sgdk_parallax_image.py 
+python3 sgdk_endless_scroll.py 
 ```
 This generates an image called `bg.png` and should  output text similar to the
 following
@@ -96,7 +96,7 @@ Ending row floor: 223
 * Final Scroll increment floor: 1.8605
 Image size 480 x 224
 ```
-![default background](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/bg.png)
+![default background](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/EndlessScroll/bg.png)
 The output gives you information you can use to scroll the image.
 * Scroll width far 80.000 : The repeated image takes up 80 pixels at the top row of the floor.
 * Scroll width near 160.000 : The repeated image takes up 160 pixels at the bottom row of the floor.
@@ -203,23 +203,23 @@ You can increase the number of image repetitions with the `-f` and `-n`
 parameters.  To have six repetitions at the far side of the floor and four
 repetitions at the near side run these parameters:
 ```bash
-python3 sgdk_parallax_image.py -i test_tile.png   -f 6 -n 4  -o tilefloor.png
+python3 sgdk_endless_scroll.py -i test_tile.png   -f 6 -n 4  -o tilefloor.png
 ```
 I also specified a different floor image with the `-i` parameter and changed the 
 output filename with `-o`.
-![Tile Floor](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/tilefloor.png)
+![Tile Floor](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/EndlessScroll/tilefloor.png)
 ## Add a ceiling
 Adding a ceiling can be done by specifying the start (`-S`) and end (`-E`) rows for the ceiling.
 ```bash
-python3 sgdk_parallax_image.py -i test_wood.png   -f 6 -n 4   -S 8 -E 48 -o woodceil.png
+python3 sgdk_endless_scroll.py -i test_wood.png   -f 6 -n 4   -S 8 -E 48 -o woodceil.png
 ```
-![Wood Ceiling](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/woodceil.png)
+![Wood Ceiling](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/EndlessScroll/woodceil.png)
 ## Add a ceiling with its own tile images
 Specifying `-I` lets you add a second image for the ceiling.
 ```bash
-python3 sgdk_parallax_image.py -i test_wood.png   -f 6 -n 4   -S 8 -E 48  -I test_tile.png  -o woodfloor_tileceiling.png
+python3 sgdk_endless_scroll.py -i test_wood.png   -f 6 -n 4   -S 8 -E 48  -I test_tile.png  -o woodfloor_tileceiling.png
 ```
-![Wood Floor Tile Ceiling](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/ParallaxPy/woodfloor_tileceiling.png)
+![Wood Floor Tile Ceiling](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/EndlessScroll/woodfloor_tileceiling.png)
 
 ## Create an example project
 Specifying a folder with the `-p` parameter will create a project folder with files for SGDK.
