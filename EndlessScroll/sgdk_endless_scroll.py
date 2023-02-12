@@ -190,10 +190,12 @@ def main(args, loglevel):
     pal = im.getpalette()
     # get source points
     srcTopLeft = ( 0, 0 )
-    srcTopRight = ( inputWidth, 0 )
-    srcBottomLeft = ( 0, inputHeight ) 
-    srcBottomRight = ( inputWidth, inputHeight )
+    srcTopRight = ( inputWidth-1, 0 )
+    srcBottomLeft = ( 0, inputHeight-1 ) 
+    srcBottomRight = ( inputWidth-1, inputHeight-1 )
     srcPts = np.array( [ srcBottomLeft, srcBottomRight, srcTopRight, srcTopLeft] )    
+    logging.info("srcPts:");
+    logging.info(srcPts);
 
     # work image
     tmpImg = Image.new('RGB', (outputCols, rows))
@@ -202,11 +204,13 @@ def main(args, loglevel):
     for rep in range( 0, farImageReps +1, 1 ):
       # detination points
       dstTopLeft = ( rep * farPolyWidth, startRow )
-      dstTopRight = ( rep * farPolyWidth + farPolyWidth +1, startRow )
-      dstBottomLeft = ( bottomLeftStart + rep * nearPolyWidth, endRow +1 ) 
-      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth +1, endRow +1  )
+      dstTopRight = ( rep * farPolyWidth + farPolyWidth-0.5, startRow )
+      dstBottomLeft = ( bottomLeftStart + rep * nearPolyWidth, endRow+1 ) 
+      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth-0.5, endRow +1  )
       dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
       dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
+      logging.info("dstPts:");
+      logging.info(dstPts);
 
       # Get Perspective Transform Algorithm
       srcPtsList = np.float32( srcPts.tolist() )
@@ -237,18 +241,22 @@ def main(args, loglevel):
         # assume old pal
         # get source points
         srcTopLeft = ( 0, 0 )
-        srcTopRight = ( inputWidth, 0 )
-        srcBottomLeft = ( 0, inputHeight ) 
-        srcBottomRight = ( inputWidth, inputHeight )
+        srcTopRight = ( inputWidth-1, 0 )
+        srcBottomLeft = ( 0, inputHeight-1 ) 
+        srcBottomRight = ( inputWidth-1, inputHeight-1 )
         srcPts = np.array( [ srcBottomLeft, srcBottomRight, srcTopRight, srcTopLeft] )    
+        logging.info("srcPts:");
+        logging.info(srcPts);
         topLeftStart = COLS / 2 - bottomTotalWidth / 2
         for rep in range( 0, farImageReps +1, 1 ):
           # detination points
           dstTopLeft = ( topLeftStart + rep * nearPolyWidth, startCeilingRow )
-          dstTopRight = ( topLeftStart + rep * nearPolyWidth + nearPolyWidth + 1, startCeilingRow )
+          dstTopRight = ( topLeftStart + rep * nearPolyWidth + nearPolyWidth,  startCeilingRow )
           dstBottomLeft = (  rep * farPolyWidth, endCeilingRow +1 ) 
-          dstBottomRight = (  rep * farPolyWidth + farPolyWidth + 1, endCeilingRow +1  )
+          dstBottomRight = (  rep * farPolyWidth + farPolyWidth, endCeilingRow +1  )
           dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
+          logging.info("dstPts:");
+          logging.info(dstPts);
           dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
           # Get Perspective Transform Algorithm
           srcPtsList = np.float32( srcPts.tolist() )
