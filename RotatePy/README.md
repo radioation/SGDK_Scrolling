@@ -87,7 +87,7 @@ I'm using it here for simplicity
 
 
 Suppose you want to have a simple image of a green bar. 
-![green bar](https://d2f0zrmol3qj3h.cloudfront.net/ae7cb7d0-3e8a-437b-8d63-8dd730ebae9b-platform.png)
+![green bar](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/RotatePy/green_bar.png)
 This image is 320 x 224 pixels.  The green bar's upper left pixel is at `x = 48` and `y = 96`.  The 
 lower right corner of the green bar is at `x = 271` and `y = 111`.   
  
@@ -193,8 +193,7 @@ Project files can be found [here](https://github.com/radioation/SGDK_Scrolling/t
 
 
 The rotated image should look like:
-![green bar rotated 2 degrees](https://d2f0zrmol3qj3h.cloudfront.net/ba321fe3-69ae-415e-b3a2-6c4d73df921d-rotate_2_degrees.png)
-
+![green bar rotated 2 degrees](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/RotatePy/green_bar_rotated_2.png)
  
 
 
@@ -202,17 +201,17 @@ The start/stop rows and columns will vary with your application.  You'll need to
 rows and columns to fit your image and the amount you want to rotate it.
  If you have too few rows, the rotation effect will stop too soon.  5 degrees with 
 `--row_start 93 --row_end 113` looks like this:
-![green bar rotated 5 degrees with too few start and end rows](https://d2f0zrmol3qj3h.cloudfront.net/90b9ab71-f97c-4c61-927d-b851064183be-rotate_5_degrees_no_enough_rows.png)
+![green bar rotated 5 degrees with too few start and end rows](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/RotatePy/green_bar_rotated_5_too_few_rows.png)
 
 
 
 Increasing the number of computed rows  lets you use larger rotations.   5 degrees using 
 `--row_start 63 --row_end 143`  looks like this:
-![green bar rotated 5 degrees with more start and end rows](https://d2f0zrmol3qj3h.cloudfront.net/2a14ffcb-5aee-4381-8cd5-22cdbe032b0c-rotation_5_more_hscroll_rows.png)
+![green bar rotated 5 degrees with more start and end rows](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/RotatePy/green_bar_rotated_5_MOAR_ROWS.png)
 -15 degrees
 
 And 15 degrees looks like this.
-![green bar rotated 15 degrees with more start and end rows](https://d2f0zrmol3qj3h.cloudfront.net/9e0efebe-c73a-4ed6-870c-49001f2a1f0f-rotate_-15_degrees.png)
+![green bar rotated 15 degrees with more start and end rows](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/RotatePy/green_bar_rotated_15.png)
 
 Note the green pixels on the left portion of the display.  You can around this by using a wider image for the rotating background.  The actual width of your background image depends on what your doing.  
 
@@ -441,7 +440,6 @@ move currAngle from 0 to 10 and from 10 to 0.
 Project files can be found [here](https://github.com/radioation/SGDK_Scrolling/tree/main/RotatePy/rotate_-5_to_5)
 
  
-[![ ](https://d2f0zrmol3qj3h.cloudfront.net/ae7cb7d0-3e8a-437b-8d63-8dd730ebae9b-platform.png)](https://d2f0zrmol3qj3h.cloudfront.net/16225daa-b7db-46c3-8699-f94ce99685fe-rotate.mp4)
 
 * the (angleDelay %6 == 0) just slows down the rate of changin `currAngle`
 * still getting  scrolling artifacts on the left.  A simple way around this is to use a wider image (nextexample)
@@ -524,7 +522,6 @@ This is done to make sure we don't start the horizontal scroll at a negative row
 
 Project files can be found [here](https://github.com/radioation/SGDK_Scrolling/tree/main/RotatePy/rotation_and_translation)
 
-[![ ](https://d2f0zrmol3qj3h.cloudfront.net/ae7cb7d0-3e8a-437b-8d63-8dd730ebae9b-platform.png)](https://d2f0zrmol3qj3h.cloudfront.net/0cc27d6f-89dc-436e-b7b5-44a5649b2e5f-rotation_and_translation.mp4)
 
 
 
