@@ -218,11 +218,24 @@ def main(args, loglevel):
     # loop over again
     for key, val in pointsToRotate.items():
       first = True
-      outfile.write("\n\ns16 %s[] = {" % (key))
+      outfile.write("\n\ns16 %sX[] = {" % (key))
       for deg in np.arange( minRot, maxRot + rotStep, rotStep ): # include end rot
         rad = deg * math.pi/180; 
         # Using real rotation but Y-flipped due to genesis coordinate system.
         newX = centerX* 16 + ( val[0] + imageShift - centerX * 16) * math.cos(rad) - (centerY - val[1])  * math.sin(rad)
+        if not first:
+          outfile.write( ", " )
+        else:
+          first = False;
+
+        outfile.write("\n %d" % (round(newX)))
+      outfile.write("\n};")
+
+    for key, val in pointsToRotate.items():
+      first = True
+      outfile.write("\n\ns16 %sY[] = {" % (key))
+      for deg in np.arange( minRot, maxRot + rotStep, rotStep ): # include end rot
+        rad = deg * math.pi/180; 
         # find the row current point from y = x sin(theta) + y cos (theta)
         newY =   centerY - (  ((val[0] + imageShift - centerX * 16) * math.sin(rad) ) + ((centerY - val[1]) * math.cos(rad) ) )
         if not first:
@@ -230,9 +243,8 @@ def main(args, loglevel):
         else:
           first = False;
 
-        outfile.write("\n %d, %d" % (round(newX), round(newY)))
+        outfile.write("\n %d" % (round(newY)))
       outfile.write("\n};")
-
 
   outfile.write("\n\n#endif // _%s_\n" % outputFilename.upper().replace(".","_") )
   outfile.close()

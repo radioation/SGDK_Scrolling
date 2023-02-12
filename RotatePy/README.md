@@ -88,6 +88,7 @@ I'm using it here for simplicity
 
 Suppose you want to have a simple image of a green bar. 
 ![green bar](https://raw.githubusercontent.com/radioation/SGDK_Scrolling/main/RotatePy/green_bar.png)
+
 This image is 320 x 224 pixels.  The green bar's upper left pixel is at `x = 48` and `y = 96`.  The 
 lower right corner of the green bar is at `x = 271` and `y = 111`.   
  
