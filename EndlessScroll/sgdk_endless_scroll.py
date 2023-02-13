@@ -9,7 +9,7 @@ import shutil
 from jinja2 import Template
 from pathlib import Path
 
-def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow ):
+def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, imageWidth ):
   # make resource dir and rescomp file
   srcFolder = destDir + "/src"
   if not os.path.exists(srcFolder):
@@ -90,18 +90,28 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
     scrollRightResetList.append( (r, scroll ) )
     scroll -= finalScrollStep
 
-
-  with open('main.c.jinja') as srcFile:
-    srcTemp = Template( srcFile.read() )
-    with open( srcFolder + "/main.c", 'w') as outSrc:
-      outSrc.write( srcTemp.render(
-        bg_name = fname,
-        far_width = farPolyWidth,
-        scroll_left_list = scrollLeftList,
-        scroll_right_list = scrollRightList,
-        scroll_right_reset_list = scrollRightResetList,
-
-        ))
+  if imageWidth <= 512:
+    with open('main.c.jinja') as srcFile:
+      srcTemp = Template( srcFile.read() )
+      with open( srcFolder + "/main.c", 'w') as outSrc:
+        outSrc.write( srcTemp.render(
+          bg_name = fname,
+          far_width = farPolyWidth,
+          scroll_left_list = scrollLeftList,
+          scroll_right_list = scrollRightList,
+          scroll_right_reset_list = scrollRightResetList,
+ 
+          ))
+  else:
+    with open('main_wide.c.jinja') as srcFile:
+      srcTemp = Template( srcFile.read() )
+      with open( srcFolder + "/main.c", 'w') as outSrc:
+        outSrc.write( srcTemp.render(
+          bg_name = fname,
+          far_width = farPolyWidth,
+          scroll_left_list = scrollLeftList,
+          image_width = imageWidth,
+          ))
 
 
 def main(args, loglevel):
@@ -205,8 +215,8 @@ def main(args, loglevel):
       # detination points
       dstTopLeft = ( rep * farPolyWidth, startRow )
       dstTopRight = ( rep * farPolyWidth + farPolyWidth-0.5, startRow )
-      dstBottomLeft = ( bottomLeftStart + rep * nearPolyWidth, endRow+1 ) 
-      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth-0.5, endRow +1  )
+      dstBottomLeft = ( bottomLeftStart + rep * nearPolyWidth, endRow ) 
+      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth-0.5, endRow   )
       dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
       dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
       logging.info("dstPts:");
@@ -252,8 +262,8 @@ def main(args, loglevel):
           # detination points
           dstTopLeft = ( topLeftStart + rep * nearPolyWidth, startCeilingRow )
           dstTopRight = ( topLeftStart + rep * nearPolyWidth + nearPolyWidth,  startCeilingRow )
-          dstBottomLeft = (  rep * farPolyWidth, endCeilingRow +1 ) 
-          dstBottomRight = (  rep * farPolyWidth + farPolyWidth, endCeilingRow +1  )
+          dstBottomLeft = (  rep * farPolyWidth, endCeilingRow  ) 
+          dstBottomRight = (  rep * farPolyWidth + farPolyWidth, endCeilingRow   )
           dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
           logging.info("dstPts:");
           logging.info(dstPts);
@@ -288,7 +298,7 @@ def main(args, loglevel):
     outImg.save( outputFilename )
 
     if len(projectDir) > 0 :
-      makeProjectFiles( projectDir, outputFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow )
+      makeProjectFiles( projectDir, outputFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, outputCols )
 
 # the program.
 if __name__ == '__main__':

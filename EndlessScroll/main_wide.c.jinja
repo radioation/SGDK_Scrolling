@@ -1,0 +1,115 @@
+#include <genesis.h>
+#include "resources.h"
+
+s16 hScrollB[224];
+fix32 fscroll[224];
+s16 scrollStep = 0;
+s16 offset = 0;
+s16 imageOffset = 0;
+s16 ind = 0;
+static void scrollLeft() {
+
+  ++scrollStep;
+
+  if (scrollStep < {{ far_width|int }} ) {
+{% for scrollvals in scroll_left_list %}
+    fscroll[{{scrollvals[0]}}] = fix32Sub( fscroll[{{scrollvals[0]}}], FIX32( {{'%0.3f' % scrollvals[1]|float }} ) );
+{%- endfor %}
+  } else {
+    scrollStep = 0;
+    offset = 0;
+    imageOffset = 0;
+    VDP_setTileMapEx(BG_B, {{ bg_name }}.tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind),
+        0,    // Plane X destination
+        0,    // plane Y destination
+        0,    // Region X start position
+        0,    // Region Y start position
+        32,   // width  (went with 64 becasue default width is 64.  Viewable screen is 40)
+        28,   // height
+        DMA_QUEUE);
+      memset(fscroll, 0, sizeof(fscroll));
+  }
+}
+
+
+int main(bool hard)
+{
+  memset(hScrollB, 0, sizeof(hScrollB));
+  memset(fscroll, 0, sizeof(fscroll));
+  VDP_setScreenWidth320();
+
+  PAL_setPalette(PAL0, {{ bg_name }}_pal.data, CPU);
+  PAL_setColor(0, 0x0000);
+
+  // set scrolling modes to support line scrolling.
+  VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_PLANE);
+
+  // get initial tile position in VRAM and load image
+  ind = TILE_USER_INDEX;
+  int indexB = ind;
+  VDP_loadTileSet(bg.tileset, indexB, CPU);
+
+  //VDP_drawImageEx(BG_B, &bg, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, indexB), 0, 0, FALSE, TRUE);
+
+  // put out the image
+  VDP_setTileMapEx(BG_B, {{ bg_name }}.tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind),
+      0,    // Plane X destination
+      0,    // plane Y destination
+      0,    // Region X start position
+      0,    // Region Y start position
+      64,   // width  (went with 64 becasue default width is 64.  Viewable screen is 40)
+      28,   // height
+      CPU);
+
+
+  u16 srcCols = {{ image_width / 8 }};
+  while (TRUE)
+  {
+    scrollLeft();
+    // tile in memory
+    offset += 1;
+    if (offset > 511) {
+      offset = 0;
+    }
+
+    // tile from image
+    imageOffset += 1;
+    if (imageOffset > {{ image_width - 1 }}) {
+      imageOffset = 0; // bg image is 640 pixels wide
+    }
+    
+    if (offset % 8 == 0 && scrollStep !=0)
+    {
+      s16 dstCol = (offset + 504) / 8;
+      if (dstCol > 63)
+      {
+        dstCol -= 64; // wrap to zero
+      }
+
+      s16 srcCol = (imageOffset + 508) / 8;
+      if (srcCol > srcCols - 1)
+      {
+        srcCol -= srcCols; // wrap to zero
+      }
+
+      VDP_setTileMapEx(BG_B, {{ bg_name }}.tilemap, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, ind),
+          dstCol, // Plane X destination
+          0,       // plane Y destination
+          srcCol, // Region X start position
+          0,       // Region Y start position
+          1,       // width
+          28,     // height
+          DMA_QUEUE);
+    }
+
+
+    //scrollRight();
+    for (int i = 0; i < 224; i++) // Not very efficient, but works for a demo
+    {
+      hScrollB[i] = fix32ToInt(fscroll[i]);
+    }
+    VDP_setHorizontalScrollLine(BG_B, 0, hScrollB, 224, DMA_QUEUE);
+    SYS_doVBlankProcess();
+  }
+}
+
