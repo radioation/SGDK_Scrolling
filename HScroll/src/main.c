@@ -7,70 +7,69 @@ s16 imageOffset = 0;
 
 int main( bool hard ) {
 
-     
-
-  //PAL_setPalette( PAL1, palette_all.data, DMA);
+  // load the background palette
   PAL_setPalette( PAL1, bg_palette.data, DMA);
 
-	// set scrolling mode.  HSCROLL_PLANE Affects the WHOLE plane
-	VDP_setScrollingMode( HSCROLL_PLANE, VSCROLL_PLANE);
+  // set scrolling mode.  HSCROLL_PLANE Affects the WHOLE plane.
+  VDP_setScrollingMode( HSCROLL_PLANE, VSCROLL_PLANE);
 
-	// get our position in VRAM.
-	int ind = TILE_USER_INDEX; 
-	// Load the plane tiles into VRAM at our position
-	VDP_loadTileSet( bg_image.tileset, ind, DMA );
+  // get our position for tiles.
+  int ind = TILE_USER_INDEX; 
 
-	// put out the image
-	VDP_setTileMapEx(BG_A, bg_image.tilemap, TILE_ATTR_FULL(PAL1, FALSE, FALSE, FALSE, ind),
-									 0,			// Plane X destination
-									 0,			// plane Y destination
-									 0, 		// Region X start position
-									 0,			// Region Y start position
-									 64,		// width  (went with 64 becasue default width is 64.  Viewable screen is 40)
-									 28,		// height
-									 CPU);
+  // Load the plane tiles into VRAM at our position
+  VDP_loadTileSet( bg_image.tileset, ind, DMA );
 
-	while (TRUE)
-	{
-		// tile in memory
-		offset += 1;
-		if (offset > 511)
-			offset = 0;
+  // put out the image
+  VDP_setTileMapEx(BG_A, bg_image.tilemap, TILE_ATTR_FULL(PAL1, FALSE, FALSE, FALSE, ind),
+      0,    // Plane X destination
+      0,    // plane Y destination
+      0,     // Region X start position
+      0,    // Region Y start position
+      64,    // width  (went with 64 becasue default width is 64.  Viewable screen is 40)
+      28,    // height
+      CPU);
 
-		// tile from image
-		imageOffset += 1;
-		if (imageOffset > 1279)
-			imageOffset = 0; // bg image is 1280 pixels wide
+  while (TRUE)
+  {
+    // tile in memory
+    offset += 1;
+    if (offset > 511)
+      offset = 0;
 
-		if (offset % 8 == 0)
-		{
-			s16 dstCol = (offset + 504) / 8;
-			if (dstCol > 63)
-			{
-				dstCol -= 64; // wrap to zero
-			}
+    // tile from image
+    imageOffset += 1;
+    if (imageOffset > 1279)
+      imageOffset = 0; // bg image is 1280 pixels wide
 
-			s16 srcCol = (imageOffset + 512) / 8;
-			if (srcCol > 159)
-			{
-				srcCol -= 160; // wrap to zero
-			}
+    if (offset % 8 == 0)
+    {
+      s16 dstCol = (offset + 504) / 8;
+      if (dstCol > 63)
+      {
+        dstCol -= 64; // wrap to zero
+      }
 
-			KLog_S2("dstCol: ", dstCol, "srcCol: ", srcCol);
-			VDP_setTileMapEx(BG_A, bg_image.tilemap, TILE_ATTR_FULL(PAL1, FALSE, FALSE, FALSE, ind),
-											 dstCol, // Plane X destination
-											 0,			 // plane Y destination
-											 srcCol, // Region X start position
-											 0,			 // Region Y start position
-											 1,			 // width
-											 28,		 // height
-											 CPU);
-		}
+      s16 srcCol = (imageOffset + 512) / 8;
+      if (srcCol > 159)   // 160 8-pixel columns in 1280 pixel width image
+      {
+        srcCol -= 160; // wrap to zero
+      }
 
-		VDP_setHorizontalScroll(BG_A, -offset);
+      KLog_S2("dstCol: ", dstCol, "srcCol: ", srcCol);
+      VDP_setTileMapEx(BG_A, bg_image.tilemap, TILE_ATTR_FULL(PAL1, FALSE, FALSE, FALSE, ind),
+          dstCol, // Plane X destination
+          0,      // plane Y destination
+          srcCol, // Region X start position
+          0,      // Region Y start position
+          1,      // width
+          28,     // height
+          CPU);
+    }
 
-		// let SGDK do its thing
-		SYS_doVBlankProcess();
-	}
-	return 0;
+    VDP_setHorizontalScroll(BG_A, -offset);
+
+    // let SGDK do its thing
+    SYS_doVBlankProcess();
+  }
+  return 0;
 }
