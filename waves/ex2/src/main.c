@@ -32,7 +32,8 @@ int main(bool hard) {
 
   u16 sinPerLine = 5;    // Elements to jump in sin() per line. Larger values give us faster waves.
   fix16 amplitude = FIX16( 10.0 );  // Amplitude sets how big the waves are.
-  s16 offsetB = -40;  // shift left a bit.
+  s16 offsetB = -10;  // shift left a bit.
+  fix16 fOffsetB = FIX16(-10);  // shift left a bit.
 
 
   // foreground
@@ -50,14 +51,20 @@ int main(bool hard) {
     u16 joypad  = JOY_readJoypad( JOY_1 );
     if( joypad & BUTTON_LEFT ) {
       offsetA +=2;
-        if ( offsetA > 0 ) {
-            offsetA = 0;
-        }
+      if ( offsetA > 0 ) {
+        offsetA = 0;
+      } else {
+        fOffsetB = fix16Add(fOffsetB, FIX16(0.75));
+        offsetB = fix16ToInt( fOffsetB );
+      }
     } else if( joypad & BUTTON_RIGHT ) {
       offsetA -=2;
-        if ( offsetA < -158 ) {
-            offsetA = -158;
-        }
+      if ( offsetA < -158 ) {
+        offsetA = -158;
+      } else {
+        fOffsetB = fix16Sub(fOffsetB, FIX16(0.75));
+        offsetB = fix16ToInt( fOffsetB );
+      }
     }
 
 
@@ -67,12 +74,12 @@ int main(bool hard) {
     //    and adjust with params
     sinOffset++; // move up in the sine table
     for( u16 i = 0; i < TOTAL_LINES; ++i ) {
-        // compute horizontal offsets with sine table.
-        hScrollB[i] = fix16ToInt( fix16Mul(  sinFix16(( i + sinOffset ) * sinPerLine ), amplitude ) ) + offsetB;
-        hScrollA[i] = offsetA;
+      // compute horizontal offsets with sine table.
+      hScrollB[i] = fix16ToInt( fix16Mul(  sinFix16(( i + sinOffset ) * sinPerLine ), amplitude ) ) + offsetB;
+      hScrollA[i] = offsetA;
     }
 
-   
+
     // apply scrolling offsets 
     VDP_setHorizontalScrollLine (BG_B, 0, hScrollB, 223, DMA_QUEUE);
     VDP_setHorizontalScrollLine (BG_A, 0, hScrollA, 223, DMA_QUEUE);
