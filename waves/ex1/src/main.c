@@ -24,10 +24,6 @@ int main(bool hard) {
 
   s16 hScroll[TOTAL_LINES]; 
   memset( hScroll, 0, sizeof(hScroll));
-  fix16 offsetPlaneSky = FIX16(0);
-  fix16 landOffsets[TOTAL_LINES];
-  memset( landOffsets, 0, sizeof(landOffsets));
-
 
   u16 sinPerLine = 5;    // Elements to jump in sin() per line. Larger values give us faster waves.
   fix16 amplitude = FIX16( 10.0 );  // Amplitude sets how big the waves are.
