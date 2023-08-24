@@ -3,6 +3,43 @@
 
 #define TOTAL_LINES 224
 
+#define BUBBLE_COUNT 20
+
+typedef struct 
+{
+  Sprite *sprite;
+  s16 pos_x;
+  s16 pos_y;
+  s16 vel_y;
+  u16 sinPerLine;
+  fix16 amplitude;
+
+} CP_SPRITE;
+
+CP_SPRITE bubbles[BUBBLE_COUNT];
+
+void createBubbles() {
+  for( u16 i=0; i < BUBBLE_COUNT; ++i ) {
+    bubbles[i].pos_x =  random() % ( 320 - 32);
+    bubbles[i].pos_y =  random() % ( 224 - 32);
+    bubbles[i].vel_y =  random() % ( 4) + 1;
+    bubbles[i].sinPerLine =  random() % 5 + 5;
+    bubbles[i].amplitude = intToFix16( random() % 7 + 10 ); 
+    bubbles[i].sprite = SPR_addSprite( &bubble, fix16ToInt( bubbles[i].pos_x),  bubbles[i].pos_y, TILE_ATTR( PAL1, 0, FALSE, FALSE));
+  }
+}
+
+void updateBubbles() {
+  for( u16 i=0; i < BUBBLE_COUNT; ++i ) {
+    bubbles[i].pos_y -= bubbles[i].vel_y;
+    if( bubbles[i].pos_y < -32 ) {
+      bubbles[i].pos_y = 224;
+    }
+    s16 x = fix16ToInt( fix16Mul(  sinFix16( bubbles[i].pos_y * bubbles[i].sinPerLine ), bubbles[i].amplitude ) ) + bubbles[i].pos_x;
+    SPR_setPosition( bubbles[i].sprite, x, bubbles[i].pos_y);
+  }
+
+}
 
 int main(bool hard) {
 
@@ -42,6 +79,12 @@ int main(bool hard) {
   s16 aDir = -1;
   memset( hScrollA, 0, sizeof(hScrollA));
 
+
+  //////////////////////////////////////////////////////////////
+  // sprites 
+  SPR_init();
+  createBubbles(); 
+
   //////////////////////////////////////////////////////////////
   // main loop.
   u16 sinOffset = 0; // Step basically tells us where we're starting in the sin table.
@@ -79,6 +122,11 @@ int main(bool hard) {
       hScrollA[i] = offsetA;
     }
 
+
+    //////////////////////////////////////////////////////////////
+    // update sprites
+    updateBubbles(); 
+    SPR_update();
 
     // apply scrolling offsets 
     VDP_setHorizontalScrollLine (BG_B, 0, hScrollB, 223, DMA_QUEUE);
