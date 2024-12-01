@@ -32,7 +32,7 @@ int main(bool hard) {
   while(TRUE)
   {
     // scroll the sky
-    offsetPlaneSky = fix16Sub( offsetPlaneSky, FIX16(0.05));
+    offsetPlaneSky = offsetPlaneSky - FIX16(0.05);
     for (u16 i = 0; i <FAR; i ++) {
       hScroll[i] = fix16ToInt(offsetPlaneSky);
     }
@@ -42,8 +42,8 @@ int main(bool hard) {
     fix16 offset = FIX16(0.05);
     for (u16 i = FAR; i < 224; i ++) {
       // increase the amount we scroll as we get closer to the bottom of the screen.
-      offset = fix16Add( offset, delta);
-      landOffsets[i-FAR] = fix16Sub( landOffsets[i-FAR], offset);
+      offset = offset + delta;
+      landOffsets[i-FAR] = landOffsets[i-FAR] - offset;
       hScroll[i] = fix16ToInt(landOffsets[i-FAR]);
     }
 

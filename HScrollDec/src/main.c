@@ -22,10 +22,10 @@ u16 lastDstColB = -1;
 s16 scrollPlane(VDPPlane plane, const TileMap *tilemap, int index, fix32 speed, fix32 *planeOffset, fix32 *imageOffset, u16 *lastSrcCol, u16 *lastDstCol)
 {
 	// Set the scrolling position
-	*planeOffset = fix32Add(*planeOffset, speed);
+	*planeOffset = *planeOffset + speed;
 	if (*planeOffset >= FIX32(PLANE_MAX_PIXEL))
 		*planeOffset = FIX32(0); // plane in memory is 512 pixels wide
-	*imageOffset = fix32Add(*imageOffset, speed);
+	*imageOffset = *imageOffset + speed;
 	if (*imageOffset >= FIX32(IMAGE_MAX_PIXEL))
 		*imageOffset = FIX32(0); // bg image is 1280 pixels wide
 	s16 sPlaneOffset = fix32ToInt(*planeOffset);
