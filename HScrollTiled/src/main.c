@@ -54,14 +54,14 @@ void updateTiles(VDPPlane plane, const TileMap *tilemap, int index,
 	for (s16 row = 0; row < rows; ++row)
 	{
 		// Set the scrolling position of plane per row
-		planeOffset[row] = fix32Add(planeOffset[row], speed[row]);
+		planeOffset[row] = planeOffset[row] + speed[row];
 		if (planeOffset[row] >= FIX32(PLANE_MAX_PIXEL)) // plane in memory is 512 pixels wide
 		{
 			planeOffset[row] = FIX32(0); 
 		}
 
 		// keep track of where we are in the image per row
-		imageOffset[row] = fix32Add(imageOffset[row], speed[row]);
+		imageOffset[row] = imageOffset[row] + speed[row];
 		if (imageOffset[row] >= FIX32(IMAGE_MAX_PIXEL)) // bg image is 1280 pixels wide
 		{
 			imageOffset[row] = FIX32(0); 
