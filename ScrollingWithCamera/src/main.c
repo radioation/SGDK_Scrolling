@@ -142,8 +142,8 @@ static void inputCallback( u16 joy, u16 changed, u16 state ) {
 				// create a new one
 
 				u16 rot = fix32ToInt( playerRotation);
-				playerShots[i].pos_x = fix32Add( player.pos_x, FIX32((PLAYER_WIDTH-PLAYER_SHOT_WIDTH)/2)) +  fix32Mul( deltaX[rot], FIX32(2.0));
-				playerShots[i].pos_y = fix32Add( player.pos_y, FIX32((PLAYER_HEIGHT-PLAYER_SHOT_WIDTH)/2)) +  fix32Mul( deltaY[rot], FIX32(2.0));
+				playerShots[i].pos_x = player.pos_x + FIX32((PLAYER_WIDTH-PLAYER_SHOT_WIDTH)/2) +  fix32Mul( deltaX[rot], FIX32(2.0));
+				playerShots[i].pos_y = player.pos_y + FIX32((PLAYER_HEIGHT-PLAYER_SHOT_WIDTH)/2) +  fix32Mul( deltaY[rot], FIX32(2.0));
 				playerShots[i].vel_x = fix32Mul( deltaX[rot], FIX32(2.0));
 				playerShots[i].vel_y = fix32Mul( deltaY[rot], FIX32(2.0));
 				playerShots[i].active = TRUE;
@@ -189,8 +189,8 @@ static void update() {
 	// update player
 	if( updatePlayerPosition == TRUE ) {
 		int rot = fix32ToInt( playerRotation);
-		player.pos_x = fix32Add( player.pos_x, deltaX[rot] );
-		player.pos_y = fix32Add( player.pos_y, deltaY[rot] );
+		player.pos_x = player.pos_x + deltaX[rot];
+		player.pos_y = player.pos_y + deltaY[rot];
 
 
 		if( player.pos_x< FIX32( -6.0 ) ) {
