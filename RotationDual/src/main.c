@@ -172,7 +172,7 @@ int main(bool hard)
   PAL_setColor(0, 0x0000);
 
   // set scrolling modes to support fake rotation
-  VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_2TILE);
+  VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_COLUMN);
 
   // get initial tile position in VRAM
   int ind = TILE_USER_INDEX;

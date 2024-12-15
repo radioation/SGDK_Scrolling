@@ -75,7 +75,7 @@ int main(bool hard)
   memset( vScrollA, 0, sizeof(vScrollA));
 
 	// set scrolling mode to LINE for horizontal and TILE for vertical
-	VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_2TILE);
+	VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_COLUMN);
 
 	// get tile positions in VRAM.
 	int ind = TILE_USER_INDEX;

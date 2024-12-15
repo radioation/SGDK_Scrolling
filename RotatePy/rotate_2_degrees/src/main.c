@@ -13,7 +13,7 @@ int main(bool hard)
   PAL_setPalette( PAL0, platform_pal.data, CPU );
 
   // set scrolling mode to LINE for horizontal and TILE for vertical
-  VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_2TILE);
+  VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_COLUMN);
 
   // get tile positions in VRAM.
   int ind = TILE_USER_INDEX;

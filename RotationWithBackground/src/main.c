@@ -239,7 +239,7 @@ int main(bool hard)
 	setupB();
 
 	// set scrolling mode to support rotation
-	VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_2TILE);
+	VDP_setScrollingMode(HSCROLL_LINE, VSCROLL_COLUMN);
 
 	// get tile positions in VRAM.
 	int ind = TILE_USER_INDEX;
