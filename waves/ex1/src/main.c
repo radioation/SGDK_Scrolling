@@ -46,9 +46,9 @@ int main(bool hard) {
       sinPerLine--; 
     }
     if( joypad & BUTTON_LEFT ) {
-      amplitude = fix16Sub( amplitude, FIX16(1));
+      amplitude = amplitude - FIX16(1);
     } else if( joypad & BUTTON_RIGHT ) {
-      amplitude = fix16Add( amplitude, FIX16(1));
+      amplitude = amplitude + FIX16(1);
     }
 
     if( joypad & BUTTON_A) {
