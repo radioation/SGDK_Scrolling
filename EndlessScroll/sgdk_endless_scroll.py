@@ -119,6 +119,8 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
           ))
 
 def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename ):
+  logging.info("WORKING ON:" + floorImgFilename);
+  print( outputFilename )
   with Image.open( floorImgFilename ) as im:
     inputImg = im.convert('RGB')
     inputWidth, inputHeight = im.size
@@ -254,13 +256,29 @@ def main(args, loglevel):
     return
 
 
-  imageFilename =  args.input_filename[0]
-  if len(args.input_filename) > 1 :
-    imageFilenameB =  args.input_filename[1]
+  imageFilename = 'image.png'
+  imageFilenameB = ''
+  if len(args.input_filename) > 0 :
+    imageFilename =  args.input_filename[0]
+    if len(args.input_filename) > 1 :
+      imageFilenameB =  args.input_filename[1]
 
-  imageCeilingFilename =  args.input_ceiling_filename
 
-  outputFilename =  args.output_filename
+  imageCeilingFilename = ''
+  imageCeilingFilenameB = ''
+  if len(args.input_ceiling_filename) > 0 :
+    imageCeilingFilename =  args.input_ceiling_filename[0]
+    if len(args.input_ceiling_filename) > 1 :
+      imageCeilingFilenameB =  args.input_ceiling_filename[1]
+
+  outputFilename = 'bg.png'
+  outputFilenameB = ''
+  if len(args.output_filename) > 0 :
+    outputFilename =  args.output_filename[0]
+    if len(args.output_filename) > 1 :
+      outputFilenameB =  args.output_filename[1]
+
+
 
   projectDir =  args.project_directory
 
@@ -304,7 +322,10 @@ def main(args, loglevel):
   createImages( imageFilename, imageCeilingFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename )
 
   if imageFilenameB:
-    with Image.open( imageFilenameB ) as imB:
+    print("DO SECOND IMAGE")
+    print(imageFilenameB)
+    createImages( imageFilenameB, imageCeilingFilenameB, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilenameB )
+
 
   if len(projectDir) > 0 :
     makeProjectFiles( projectDir, outputFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, outputCols )
@@ -355,7 +376,7 @@ if __name__ == '__main__':
   parser.add_argument( "-i",
       "--input_filename",
       action = 'append',
-      default = ["image.png"],
+      default = [],
       help = "input image filename",
       metavar = "ARG")
 
@@ -377,13 +398,14 @@ if __name__ == '__main__':
 
   parser.add_argument( "-I",
       "--input_ceiling_filename",
-      default = '',
+      default = [],
       help = "input ceiling image filename",
       metavar = "ARG")
 
   parser.add_argument( "-o",
       "--output_filename",
-      default = 'bg.png',
+      action = 'append',
+      default = [],
       help = "Output filename",
       metavar = "ARG")
 
