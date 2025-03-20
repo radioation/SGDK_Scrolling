@@ -9,6 +9,11 @@ import shutil
 from jinja2 import Template
 from pathlib import Path
 
+# 320 x 224  
+COLS = 320  
+rows = 224
+
+
 def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, imageWidth ):
   # make resource dir and rescomp file
   srcFolder = destDir + "/src"
@@ -113,91 +118,13 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
           image_width = imageWidth,
           ))
 
-
-def main(args, loglevel):
-  logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
-  startRow = args.start_row
-  endRow = args.end_row
-  if startRow == endRow: 
-    print("Start and end row of floor must differ")
-    return
-  elif startRow > endRow:
-    temp = endRow
-    endRow = startRow
-    startRow = temp
-
-    
-  startCeilingRow = args.start_ceiling_row
-  endCeilingRow =  args.end_ceiling_row
-  if startCeilingRow == endCeilingRow and startCeilingRow > 0: 
-    print("Start and end row of ceiling must differ")
-    return
-  elif startCeilingRow > endCeilingRow:
-    temp = endCeilingRow
-    endCeilingRow = startCeilingRow
-    startCeilingRow = temp
-
-  farImageReps = args.far_image_reps
-  nearImageReps = args.near_image_reps
-  if farImageReps <= nearImageReps:
-    print("Far image reps must be larger than near image reps")
-    return
-
-
-  imageFilename =  args.input_filename
-
-  imageCeilingFilename =  args.input_ceiling_filename
-
-  outputFilename =  args.output_filename
-
-  projectDir =  args.project_directory
-
-  # 320 x 224  
-  COLS = 320  
-  rows = 224
-
-  farPolyWidth = COLS / farImageReps
-  nearPolyWidth = COLS / nearImageReps
-
-  logging.info("Image reps far: %d", farImageReps)
-  logging.info("Image reps near: %d", nearImageReps)
-  # always put out image repetition 
-  print("Scroll width far: %.3f" % farPolyWidth)
-  print("Scroll width near: %.3f" % nearPolyWidth)
-  print("Starting row floor: %d" % startRow)
-  print("Ending row floor: %d" % endRow)
-  scrollRows = endRow - startRow
-  scrollRatio = nearPolyWidth / farPolyWidth 
-  scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
-  print("* Scroll increment floor: %.4f" % scrollRowStep)
-  finalScrollStep =  (nearPolyWidth - farPolyWidth) / scrollRows
-  print("* Final Scroll increment floor: %.4f" % finalScrollStep)
-
-
-  if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
-    logging.info("Starting row ceiling: %d", startCeilingRow)
-    logging.info("Ending row ceiling: %d", endCeilingRow)
-    scrollCeilingRows = endCeilingRow - startCeilingRow
-    scrollCeilingRatio = nearPolyWidth / farPolyWidth 
-    scrollCeilingRowStep = ( scrollCeilingRatio - 1.0 ) / scrollCeilingRows
-    print("* Scroll increment ceiling: %.4f" % scrollCeilingRowStep)
-
-
-  bottomTotalWidth = nearPolyWidth * farImageReps
-  offset = farImageReps % 2 != nearImageReps % 2
-  outputCols = int(COLS + nearPolyWidth)
-  # must be multiple of 8 for tile breakdown
-  if outputCols % 8 > 0:
-    outputCols = (int( outputCols/8) +1) * 8
-
-  print("Image size %d x %d" % ( outputCols,rows ) )
-
-  with Image.open( imageFilename ) as im:
+def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename ):
+  with Image.open( floorImgFilename ) as im:
     inputImg = im.convert('RGB')
     inputWidth, inputHeight = im.size
     inputCv = np.array(inputImg)
 
-    pal = im.getpalette()
+    pal = im.getpalette() # must have same palettes.
     # get source points
     srcTopLeft = ( 0, 0 )
     srcTopRight = ( inputWidth-1, 0 )
@@ -240,10 +167,10 @@ def main(args, loglevel):
       maskCv = maskCv.all(axis=2)
       # copy warped image
       tmpCv[maskCv, :] = warpCv[maskCv, :]
-   
+
     # check if ceilng was set.
     if startCeilingRow >= 0 and endCeilingRow > 0:
-      ceilFilename = imageCeilingFilename if len(imageCeilingFilename) > 0 else imageFilename
+      ceilFilename = ceilImgFilename if len(ceilImgFilename) > 0 else floorImgFilename
       with Image.open( ceilFilename ) as ceil:
         inputCeilingImg = ceil.convert('RGB')
         inputWidth, inputHeight = ceil.size
@@ -297,8 +224,90 @@ def main(args, loglevel):
     #outImg.putpalette(pal)
     outImg.save( outputFilename )
 
-    if len(projectDir) > 0 :
-      makeProjectFiles( projectDir, outputFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, outputCols )
+def main(args, loglevel):
+  logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
+  startRow = args.start_row
+  endRow = args.end_row
+  if startRow == endRow: 
+    print("Start and end row of floor must differ")
+    return
+  elif startRow > endRow:
+    temp = endRow
+    endRow = startRow
+    startRow = temp
+
+    
+  startCeilingRow = args.start_ceiling_row
+  endCeilingRow =  args.end_ceiling_row
+  if startCeilingRow == endCeilingRow and startCeilingRow > 0: 
+    print("Start and end row of ceiling must differ")
+    return
+  elif startCeilingRow > endCeilingRow:
+    temp = endCeilingRow
+    endCeilingRow = startCeilingRow
+    startCeilingRow = temp
+
+  farImageReps = args.far_image_reps
+  nearImageReps = args.near_image_reps
+  if farImageReps <= nearImageReps:
+    print("Far image reps must be larger than near image reps")
+    return
+
+
+  imageFilename =  args.input_filename[0]
+  if len(args.input_filename) > 1 :
+    imageFilenameB =  args.input_filename[1]
+
+  imageCeilingFilename =  args.input_ceiling_filename
+
+  outputFilename =  args.output_filename
+
+  projectDir =  args.project_directory
+
+
+  farPolyWidth = COLS / farImageReps
+  nearPolyWidth = COLS / nearImageReps
+
+  logging.info("Image reps far: %d", farImageReps)
+  logging.info("Image reps near: %d", nearImageReps)
+  # always put out image repetition 
+  print("Scroll width far: %.3f" % farPolyWidth)
+  print("Scroll width near: %.3f" % nearPolyWidth)
+  print("Starting row floor: %d" % startRow)
+  print("Ending row floor: %d" % endRow)
+  scrollRows = endRow - startRow
+  scrollRatio = nearPolyWidth / farPolyWidth 
+  scrollRowStep = ( scrollRatio - 1.0 ) / scrollRows
+  print("* Scroll increment floor: %.4f" % scrollRowStep)
+  finalScrollStep =  (nearPolyWidth - farPolyWidth) / scrollRows
+  print("* Final Scroll increment floor: %.4f" % finalScrollStep)
+
+
+  if startCeilingRow > -1  and  endCeilingRow > startCeilingRow :
+    logging.info("Starting row ceiling: %d", startCeilingRow)
+    logging.info("Ending row ceiling: %d", endCeilingRow)
+    scrollCeilingRows = endCeilingRow - startCeilingRow
+    scrollCeilingRatio = nearPolyWidth / farPolyWidth 
+    scrollCeilingRowStep = ( scrollCeilingRatio - 1.0 ) / scrollCeilingRows
+    print("* Scroll increment ceiling: %.4f" % scrollCeilingRowStep)
+
+
+  bottomTotalWidth = nearPolyWidth * farImageReps
+  offset = farImageReps % 2 != nearImageReps % 2
+  outputCols = int(COLS + nearPolyWidth)
+  # must be multiple of 8 for tile breakdown
+  if outputCols % 8 > 0:
+    outputCols = (int( outputCols/8) +1) * 8
+
+  print("Image size %d x %d" % ( outputCols,rows ) )
+
+  createImages( imageFilename, imageCeilingFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename )
+
+  if imageFilenameB:
+    with Image.open( imageFilenameB ) as imB:
+
+  if len(projectDir) > 0 :
+    makeProjectFiles( projectDir, outputFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, outputCols )
 
 # the program.
 if __name__ == '__main__':
@@ -345,9 +354,12 @@ if __name__ == '__main__':
 
   parser.add_argument( "-i",
       "--input_filename",
-      default = 'image.png',
+      action = 'append',
+      default = ["image.png"],
       help = "input image filename",
       metavar = "ARG")
+
+
 
   parser.add_argument( "-S",
       "--start_ceiling_row",
