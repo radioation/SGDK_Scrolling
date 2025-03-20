@@ -182,7 +182,7 @@ def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTot
       maskCv = maskCv.all(axis=2)
       # copy warped image
       tmpCv[maskCv, :] = warpCv[maskCv, :]
-      warpImgs.append( ( maskCv, warpCv[maskCv, :] ) ) 
+      warpImgs.append( ( maskCv, warpCv[maskCv, :], gridTopLeft, gridBottomRight ) ) 
 
     if len(transitionFilename) > 0:
       for rep in range( farImageReps , -1, -1 ):
@@ -191,6 +191,9 @@ def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTot
         ImageDraw.floodfill( maskImgA, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
         outImgA = maskImgA.quantize( palette = im )
         outImgA.save( "%s_%d.png" %(transitionFilename, rep ) )
+        # Get sub region and save it too
+        cropped = outImgA.crop( ( warpImgs[rep][2][0]*8, warpImgs[rep][2][1]*8, warpImgs[rep][3][0]*8+7, warpImgs[rep][3][1]*8+7 ) )
+        cropped.save( "%s_%d-%d_%d_%d_%d.png" %(transitionFilename, rep,  warpImgs[rep][2][0],  warpImgs[rep][2][1],  warpImgs[rep][3][0],  warpImgs[rep][3][1] ) )
 
 
 
