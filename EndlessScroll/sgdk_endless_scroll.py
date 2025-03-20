@@ -160,10 +160,9 @@ def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTot
       logging.info(dstPts);
 
       gridTopLeft = ( max( min( dstTopLeft[0] // 8, dstBottomLeft[0]//8), 0 ) , dstTopLeft[1]//8 )
-      gridBottomRight = ( max( dstBottomRight[0] // 8, dstTopRight[0]//8) , dstBottomRight[1]//8 )
+      gridBottomRight = ( min( max( dstBottomRight[0] // 8, dstTopRight[0]//8), (outputCols//8) -1 ) , dstBottomRight[1]//8 )
       logging.info(gridTopLeft);
       logging.info(gridBottomRight);
-
       # Get Perspective Transform Algorithm
       srcPtsList = np.float32( srcPts.tolist() )
       dstPtsList = np.float32( dstPts.tolist() )
