@@ -118,14 +118,21 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
           image_width = imageWidth,
           ))
 
-def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename ):
+def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename, imageAFilename ):
   logging.info("WORKING ON:" + floorImgFilename);
   print( outputFilename )
   with Image.open( floorImgFilename ) as im:
     inputImg = im.convert('RGB')
     inputWidth, inputHeight = im.size
     inputCv = np.array(inputImg)
-
+    transitionFilename = ''
+    warpImgs =[]
+    if len( imageAFilename ) > 0 :
+      with Image.open( imageAFilename ) as imgA:
+        inputImgA = imgA.convert('RGB')
+        tmpImgA = np.array( inputImgA )
+        transitionFilename = os.path.splitext(outputFilename)[0]
+  
     pal = im.getpalette() # must have same palettes.
     # get source points
     srcTopLeft = ( 0, 0 )
@@ -163,12 +170,25 @@ def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTot
       if args.output_warped_images:
         warpImg.save( "warped_floor_%d.png" %(rep) )
 
+
       ## create a copy mask 
       maskCv = np.zeros_like(tmpCv)
       maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
       maskCv = maskCv.all(axis=2)
       # copy warped image
       tmpCv[maskCv, :] = warpCv[maskCv, :]
+      warpImgs.append( ( maskCv, warpCv[maskCv, :] ) ) 
+
+    if len(transitionFilename) > 0:
+      for rep in range( farImageReps , -1, -1 ):
+        print(rep)
+        tmpImgA[warpImgs[rep][0], :] = warpImgs[rep][1]
+        maskImgA = Image.fromarray( tmpImgA )
+        ImageDraw.floodfill( maskImgA, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
+        outImgA = maskImgA.quantize( palette = im )
+        outImgA.save( "%s_%d.png" %(transitionFilename, rep ) )
+
+
 
     # check if ceilng was set.
     if startCeilingRow >= 0 and endCeilingRow > 0:
@@ -208,7 +228,7 @@ def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTot
           warpImg = Image.fromarray( warpCv )
           if args.output_warped_images:
             warpImg.save( "warped_ceil_%d.png" %(rep) )
-          
+            
           ## create a copy mask 
           maskCv = np.zeros_like(tmpCv)
           maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
@@ -262,7 +282,6 @@ def main(args, loglevel):
     imageFilename =  args.input_filename[0]
     if len(args.input_filename) > 1 :
       imageFilenameB =  args.input_filename[1]
-      args.output_warped_images = True
 
 
   imageCeilingFilename = ''
@@ -320,12 +339,12 @@ def main(args, loglevel):
 
   print("Image size %d x %d" % ( outputCols,rows ) )
 
-  createImages( imageFilename, imageCeilingFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename )
+  createImages( imageFilename, imageCeilingFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename, '' )
 
   if imageFilenameB:
     print("DO SECOND IMAGE")
     print(imageFilenameB)
-    createImages( imageFilenameB, imageCeilingFilenameB, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilenameB )
+    createImages( imageFilenameB, imageCeilingFilenameB, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilenameB, outputFilename )
 
 
   if len(projectDir) > 0 :
