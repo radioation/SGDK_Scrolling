@@ -155,8 +155,14 @@ def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTot
       dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth-0.5, endRow   )
       dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
       dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
-      logging.info("dstPts:");
+
+      logging.info("rep %d dstPts:" % ( rep ) );
       logging.info(dstPts);
+
+      gridTopLeft = ( max( min( dstTopLeft[0] // 8, dstBottomLeft[0]//8), 0 ) , dstTopLeft[1]//8 )
+      gridBottomRight = ( max( dstBottomRight[0] // 8, dstTopRight[0]//8) , dstBottomRight[1]//8 )
+      logging.info(gridTopLeft);
+      logging.info(gridBottomRight);
 
       # Get Perspective Transform Algorithm
       srcPtsList = np.float32( srcPts.tolist() )
@@ -181,7 +187,6 @@ def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTot
 
     if len(transitionFilename) > 0:
       for rep in range( farImageReps , -1, -1 ):
-        print(rep)
         tmpImgA[warpImgs[rep][0], :] = warpImgs[rep][1]
         maskImgA = Image.fromarray( tmpImgA )
         ImageDraw.floodfill( maskImgA, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
