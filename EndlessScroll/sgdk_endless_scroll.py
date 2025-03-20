@@ -262,6 +262,7 @@ def main(args, loglevel):
     imageFilename =  args.input_filename[0]
     if len(args.input_filename) > 1 :
       imageFilenameB =  args.input_filename[1]
+      args.output_warped_images = True
 
 
   imageCeilingFilename = ''
