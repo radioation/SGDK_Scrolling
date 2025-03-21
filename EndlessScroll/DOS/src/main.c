@@ -18,7 +18,8 @@ int indexB_4 = 0;
 int indexB_5 = 0;
 int indexB_6 = 0;
 
-void draw6() {
+void copyTiles6() {
+    // copy tiles that matter to BG_B
     s16 offset = 0;
     for(int tx = 0; tx < 9; tx++)
     {
@@ -37,7 +38,7 @@ void draw6() {
     }
 }
 
-void draw5() {
+void copyTiles5() {
     // 17 wide.
     s16 offset = 0;
     for(int tx = 0; tx < 9; tx++)
@@ -90,7 +91,7 @@ void draw5() {
 
 }
 
-void draw4() {
+void copyTiles4() {
     s16 offset = 0;
     for(int tx = 0; tx < 9; tx++)
     {
@@ -141,7 +142,7 @@ void draw4() {
 
 }
 
-void draw3() {
+void copyTiles3() {
     s16 offset = 0;
     for(int tx = 0; tx < 7; tx++)
     {
@@ -185,7 +186,7 @@ void draw3() {
     }
 }
 
-void draw2() {
+void copyTiles2() {
     s16 offset = 3;
     for(int tx = 3; tx < 10; tx++)
     {
@@ -228,7 +229,7 @@ void draw2() {
     }
 }
 
-void draw1() {
+void copyTiles1() {
     s16 offset = 6;
     for(s16 tx = 6; tx < 11; tx++)
     {
@@ -288,7 +289,7 @@ void draw1() {
 
 }
 
-void draw0() {
+void copyTiles0() {
     s16 offset = 0;
     for(s16 ty = 0; ty < 6; ty++)
     {
@@ -365,6 +366,35 @@ static void scrollLeft() {
     } else {
         scrollStep = 0;
         memset(fscroll, 0, sizeof(fscroll));
+        if( doUpdate ) {
+            switch ( currentBackgroundStep ) {
+                case 6:
+                    copyTiles6();
+                    break;
+                case 5:
+                    copyTiles5();
+                    break;
+                case 4:
+                    copyTiles4();
+                    break;
+                case 3:
+                    copyTiles3();
+                    break;
+                case 2:
+                    copyTiles2();
+                    break;
+                case 1:
+                    copyTiles1();
+                    break;
+                case 0:
+                    copyTiles0();
+                    break;
+            }
+            currentBackgroundStep--;
+            if( currentBackgroundStep < 0 ) {   
+                doUpdate = false;
+            }
+        } 
     }
 }
 
@@ -508,24 +538,29 @@ int main(bool hard)
     while (TRUE)
     {
         tick++;
+        if( tick == 200 ) {
+          doUpdate = true;
+        }
+/*
         if( tick == 100 ) {
             // Populate a block using XY or DataRect:
-            draw6();
+//            copyTiles6();
         } else if( tick == 150 ) {
-            draw5();
+            copyTiles5();
         } else if( tick == 200 ) {
-            draw4();
+            copyTiles4();
         } else if( tick == 250 ) {
-            draw3();
+            copyTiles3();
         } else if( tick == 300 ) {
-            draw2();
+            copyTiles2();
         } else if( tick == 350 ) {
-            draw1();
+            copyTiles1();
         } else if( tick == 400 ) {
-            draw0();
-        }
+            copyTiles0();
+        }*/
 
-        //scrollLeft();
+
+        scrollLeft();
         //scrollRight();
         for (int i = 0; i < 224; i++) // Not very efficient, but works for a demo
         {
