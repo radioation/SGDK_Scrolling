@@ -141,6 +141,165 @@ void draw4() {
 
 }
 
+void draw3() {
+    s16 offset = 0;
+    for(int tx = 0; tx < 7; tx++)
+    {
+        u16 tile_id = indexB_3 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 20 + tx, 22);
+        ++offset;
+    }
+    offset+=2;
+    for(int tx = 0; tx < 8; tx++)
+    {
+        u16 tile_id = indexB_3 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 20 + tx, 23);
+        ++offset;
+    }
+    offset+=2;
+    for(int tx = 0; tx < 9; tx++)
+    {
+        u16 tile_id = indexB_3 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 20 + tx, 24);
+        ++offset;
+    }
+    offset+=1;
+    for(int tx = 0; tx < 9; tx++)
+    {
+        u16 tile_id = indexB_3 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 20 + tx, 25);
+        ++offset;
+    }
+    offset+=1;
+    for(int tx = 0; tx < 10; tx++)
+    {
+        u16 tile_id = indexB_3 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 20 + tx, 26);
+        ++offset;
+    }
+    for(int tx = 0; tx < 10; tx++)
+    {
+        u16 tile_id = indexB_3 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 20 + tx, 27);
+        ++offset;
+    }
+}
+
+void draw2() {
+    s16 offset = 3;
+    for(int tx = 3; tx < 10; tx++)
+    {
+        u16 tile_id = indexB_2 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 10 + tx, 22);
+        ++offset;
+    }
+    offset+=2;
+    for(int tx = 2; tx < 10; tx++)
+    {
+        u16 tile_id = indexB_2 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 10 + tx, 23);
+        ++offset;
+    }
+    offset+=1;
+    for(int tx = 1; tx < 10; tx++)
+    {
+        u16 tile_id = indexB_2 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 10 + tx, 24);
+        ++offset;
+    }
+    offset+=1;
+    for(int tx = 1; tx < 10; tx++)
+    {
+        u16 tile_id = indexB_2 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 10 + tx, 25);
+        ++offset;
+    }
+    for(int tx = 0; tx < 10; tx++)
+    {
+        u16 tile_id = indexB_2 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 10 + tx, 26);
+        ++offset;
+    }
+    for(int tx = 0; tx < 10; tx++)
+    {
+        u16 tile_id = indexB_2 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), 10 + tx, 27);
+        ++offset;
+    }
+}
+
+void draw1() {
+    s16 offset = 6;
+    for(s16 tx = 6; tx < 11; tx++)
+    {
+        u16 tile_id = indexB_1 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), tx, 22);
+        ++offset;
+    }
+
+    VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, indexB_1 + 8), 11, 22);
+
+    for(s16 tx = 12; tx < 14; tx++)
+    {
+        u16 tile_id = indexB_1 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), tx, 22);
+        ++offset;
+    }
+
+
+    offset+=4;
+    for(s16 tx = 4; tx < 14; tx++)
+    {
+        u16 tile_id = indexB_1 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), tx, 23);
+        ++offset;
+    }
+    offset+=3;
+    for(s16 tx = 3; tx < 13; tx++)
+    {
+        u16 tile_id = indexB_1 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), tx, 24);
+        ++offset;
+    }
+    offset+=1;
+    offset+=2;
+    for(s16 tx = 2; tx < 12; tx++)
+    {
+        u16 tile_id = indexB_1 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), tx, 25);
+        ++offset;
+    }
+    offset+=2;
+    offset+=1;
+    for(s16 tx = 1; tx < 12; tx++)
+    {
+        u16 tile_id = indexB_1 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), tx, 26);
+        ++offset;
+    }
+    offset+=2;
+    for(s16 tx = 0; tx < 11; tx++)
+    {
+        u16 tile_id = indexB_1 + offset;
+        VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), tx, 27);
+        ++offset;
+    }
+
+
+}
+
+void draw0() {
+    s16 offset = 0;
+    for(s16 ty = 0; ty < 6; ty++)
+    {
+        for(s16 tx = 0; tx < 7; tx++)
+        {
+            u16 tile_id = indexB_0 + offset;
+            VDP_setTileMapXY(BG_B, TILE_ATTR_FULL(PAL0, FALSE, FALSE, FALSE, tile_id), tx, 22 + ty);
+            ++offset;
+        }
+    }
+}
 
 
 static void updateBackground() {
@@ -349,13 +508,21 @@ int main(bool hard)
     while (TRUE)
     {
         tick++;
-        if( tick == 300 ) {
+        if( tick == 100 ) {
             // Populate a block using XY or DataRect:
             draw6();
-        } else if( tick == 400 ) {
+        } else if( tick == 150 ) {
             draw5();
-        } else if( tick == 500 ) {
+        } else if( tick == 200 ) {
             draw4();
+        } else if( tick == 250 ) {
+            draw3();
+        } else if( tick == 300 ) {
+            draw2();
+        } else if( tick == 350 ) {
+            draw1();
+        } else if( tick == 400 ) {
+            draw0();
         }
 
         //scrollLeft();

@@ -192,7 +192,7 @@ def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTot
         outImgA = maskImgA.quantize( palette = im )
         outImgA.save( "%s_%d.png" %(transitionFilename, rep ) )
         # Get sub region and save it too
-        cropped = outImgA.crop( ( warpImgs[rep][2][0]*8, warpImgs[rep][2][1]*8, warpImgs[rep][3][0]*8+7, warpImgs[rep][3][1]*8+7 ) )
+        cropped = outImgA.crop( ( warpImgs[rep][2][0]*8, warpImgs[rep][2][1]*8, warpImgs[rep][3][0]*8+8, warpImgs[rep][3][1]*8+8 ) )
         cropped.save( "%s_%d-%d_%d_%d_%d.png" %(transitionFilename, rep,  warpImgs[rep][2][0],  warpImgs[rep][2][1],  warpImgs[rep][3][0],  warpImgs[rep][3][1] ) )
 
 
