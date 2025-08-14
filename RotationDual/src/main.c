@@ -22,15 +22,15 @@ s16 planeBDeltas[20] = {9, 9, 7, 7, 5, 5, 5, 4, 3, 2, 2, 3, 4, 5, 5, 5, 7, 7, 9,
 // setup fake rotation by changing the foreground horizontal and vertical scrolling
 void setAngle( u16 angle,  s16 startY, s16 endY, s16 centerY, s16 vscroll[], s16 hOffset, s16 vOffset ) {
   for( int row = startY; row < endY; ++row ){
-    fix32 shift = fix32Mul(FIX32( (row - centerY)>>1 ), sinFix32(angle));	
-    hScrollA[row] = fix32ToInt( shift ) - 32 + hOffset;
+    fix32 shift = F32_mul(FIX32( (row - centerY)>>1 ), sinFix32(angle));	
+    hScrollA[row] = F32_toInt( shift ) - 32 + hOffset;
   } 
 
   // vertical scroll tiles are 16 pixels wide.  Using 8 * (col-10) to scale the scrolling effect
   // at the extreme left and right of the screen  the factor would be -80 and + 80
   for( int col = 1; col < 19; ++col ){
-    fix32 shift = fix32Mul(FIX32(   (col - 9)<<3 ), sinFix32(angle));	
-    vscroll[col] = fix32ToInt( shift ) + vOffset;
+    fix32 shift = F32_mul(FIX32(   (col - 9)<<3 ), sinFix32(angle));	
+    vscroll[col] = F32_toInt( shift ) + vOffset;
   } 
 }
 

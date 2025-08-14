@@ -26,14 +26,14 @@ void handleInput() {
 		if( playerRotation > MAX_ROTATION_INDEX ) {
 			playerRotation = MIN_ROTATION_INDEX;
 		}
-		rotationIndex = fix32ToInt( playerRotation);
+		rotationIndex = F32_toInt( playerRotation);
 		SPR_setAnim( player, rotationIndex);
 	} else if( value & BUTTON_RIGHT ) {
 		playerRotation -= FIX32( 0.25 );
 		if( playerRotation < MIN_ROTATION_INDEX ) {
 			playerRotation = MAX_ROTATION_INDEX;
 		}
-		rotationIndex = fix32ToInt( playerRotation);
+		rotationIndex = F32_toInt( playerRotation);
 		SPR_setAnim( player, rotationIndex);
 	}
 
@@ -71,16 +71,16 @@ int main( bool hard ) {
 	mapPosX = FIX32(1440);
 	mapPosY = FIX32(1120);
 
-	MAP_scrollTo( map_a, fix32ToInt(mapPosX), fix32ToInt(mapPosY ) );
+	MAP_scrollTo( map_a, F32_toInt(mapPosX), F32_toInt(mapPosY ) );
 	
 
 	// Init sprite engine with defaults
 	SPR_init();
 	fix32 posX = FIX32( 160 - 16 );
 	fix32 posY = FIX32( 112 - 16 );
-	player = SPR_addSprite( &ship, fix32ToInt(posX), fix32ToInt(posY), TILE_ATTR(PAL2, 0, FALSE, FALSE ));
+	player = SPR_addSprite( &ship, F32_toInt(posX), F32_toInt(posY), TILE_ATTR(PAL2, 0, FALSE, FALSE ));
 	playerRotation = MIN_ROTATION_INDEX;
-	SPR_setAnim( player, fix32ToInt(playerRotation ) );
+	SPR_setAnim( player, F32_toInt(playerRotation ) );
 
 
 	// setup map motion delta based on index (index is shared with sprite so scrolling motion 
@@ -127,7 +127,7 @@ int main( bool hard ) {
 					SPR_update();
 
 					// Set the scrolling position 
-					MAP_scrollTo( map_a, fix32ToInt(mapPosX), fix32ToInt(mapPosY ) );
+					MAP_scrollTo( map_a, F32_toInt(mapPosX), F32_toInt(mapPosY ) );
 
 
 					SYS_doVBlankProcess();

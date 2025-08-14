@@ -66,7 +66,7 @@ void updateTiles(VDPPlane plane, const TileMap *tilemap, int index,
 		{
 			imageOffset[row] = FIX32(0); 
 		}
-		s16 sPlaneOffset = fix32ToInt(planeOffset[row]);
+		s16 sPlaneOffset = F32_toInt(planeOffset[row]);
 		// check if we need a new tile
 		if (sPlaneOffset % 8 == 0)
 		{
@@ -78,7 +78,7 @@ void updateTiles(VDPPlane plane, const TileMap *tilemap, int index,
 			}
 
 			// get source column (in tiles)
-			s16 sImageOffset = fix32ToInt(imageOffset[row]);
+			s16 sImageOffset = F32_toInt(imageOffset[row]);
 			s16 srcCol = (sImageOffset + PLANE_MAX_PIXEL - 8) / 8;
 			if (srcCol >= IMAGE_MAX_TILE)
 			{

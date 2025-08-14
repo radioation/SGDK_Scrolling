@@ -46,10 +46,10 @@ void setAngle( u16 angle, int centerY ) {
 	//KLog_F2x( 4, "c: ", cosFix32(angle), " s: ", sinFix32(angle));
 	
 	 for( int row = START_ROW_A; row < START_ROW_A + ROWS_A; ++row ){
-	 	fix32 shift = fix32Mul(FIX32( (row - centerY) ), sinFix32(angle));	
+	 	fix32 shift = F32_mul(FIX32( (row - centerY) ), sinFix32(angle));	
 	 //	KLog_S2( "  row: ", row, " off: ", (row - centerY));
 		//KLog_F1x( 4, "     shift: ", shift );
-		hScrollA[row] = fix32ToInt( shift ) - 24;
+		hScrollA[row] = F32_toInt( shift ) - 24;
 	 } 
 
 
@@ -57,8 +57,8 @@ void setAngle( u16 angle, int centerY ) {
 	// vertical scroll tiles are 16 pixels wide.  Using 8 * (col-10) to scale the scrolling effect
 	// at the extreme left and right of the screen  the factor would be -80 and + 80
 	for( int col = START_COL_A; col < START_COL_A + COLS_A; ++col ){
-		fix32 shift = fix32Mul(FIX32(  16 * (col - 10) ), sinFix32(angle));	
-		vScrollA[col] = fix32ToInt( shift );
+		fix32 shift = F32_mul(FIX32(  16 * (col - 10) ), sinFix32(angle));	
+		vScrollA[col] = F32_toInt( shift );
 	} 
 
 

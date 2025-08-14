@@ -564,7 +564,7 @@ int main(bool hard)
         //scrollRight();
         for (int i = 0; i < 224; i++) // Not very efficient, but works for a demo
         {
-            hScrollB[i] = fix32ToInt(fscroll[i]);
+            hScrollB[i] = F32_toInt(fscroll[i]);
         }
         VDP_setHorizontalScrollLine(BG_B, 0, hScrollB, 224, DMA);
         SYS_doVBlankProcess();

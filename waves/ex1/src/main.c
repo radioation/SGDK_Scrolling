@@ -29,7 +29,7 @@ int main(bool hard) {
   fix16 amplitude = FIX16( 10.0 );  // Amplitude sets how big the waves are.
   s16 offset = -40;  // shift left a bit.
   for( u16 i = 0; i < TOTAL_LINES; ++i ) {
-    hScroll[i] = fix16ToInt( fix16Mul(  sinFix16(i * sinPerLine ), amplitude ) ) + offset;
+    hScroll[i] = F16_toInt( F16_mul(  sinFix16(i * sinPerLine ), amplitude ) ) + offset;
   }
 
 
@@ -46,9 +46,9 @@ int main(bool hard) {
       sinPerLine--; 
     }
     if( joypad & BUTTON_LEFT ) {
-      amplitude = fix16Sub( amplitude, FIX16(1));
+      amplitude = amplitude - FIX16(1);
     } else if( joypad & BUTTON_RIGHT ) {
-      amplitude = fix16Add( amplitude, FIX16(1));
+      amplitude = amplitude + FIX16(1);
     }
 
     if( joypad & BUTTON_A) {
@@ -79,7 +79,7 @@ int main(bool hard) {
     sinOffset++; // move up in the sine table
     for( u16 i = 0; i < TOTAL_LINES; ++i ) {
         // compute horizontal offsets with sine table.
-        hScroll[i] = fix16ToInt( fix16Mul(  sinFix16(( i + sinOffset ) * sinPerLine ), amplitude ) ) + offset;
+        hScroll[i] = F16_toInt( F16_mul(  sinFix16(( i + sinOffset ) * sinPerLine ), amplitude ) ) + offset;
     }
 
     // apply scrolling offsets 

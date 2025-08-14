@@ -41,18 +41,18 @@ void setAngle( u16 angle, int centerY ) {
 	//KLog_F2x( 4, "   c: ", cosFix32(angle), " s: ", sinFix32(angle));
 	
 	 for( int row = START_ROW_A; row < START_ROW_A + ROWS_A; ++row ){
-	 	fix32 shift = fix32Mul(FIX32( (row - centerY)>>1 ), sinFix32(angle));	
+	 	fix32 shift = F32_mul(FIX32( (row - centerY)>>1 ), sinFix32(angle));	
 	 //	KLog_S2( "  row: ", row, " off: ", (row - centerY));
 		//KLog_F1x( 4, "     shift: ", shift );
-		hScrollA[row-START_ROW_A] = fix32ToInt( shift ) - 24;
+		hScrollA[row-START_ROW_A] = F32_toInt( shift ) - 24;
 	 } 
 
 
 	// vertical scroll tiles are 16 pixels wide.  Using 8 * (col-10) to scale the scrolling effect
 	// at the extreme left and right of the screen  the factor would be -80 and + 80
 	for( int col = START_COL_A; col < START_COL_A + COLS_A; ++col ){
-		fix32 shift = fix32Mul(FIX32(   (col - 9)<<3 ), sinFix32(angle));	
-		vScrollA[col] = fix32ToInt( shift );
+		fix32 shift = F32_mul(FIX32(   (col - 9)<<3 ), sinFix32(angle));	
+		vScrollA[col] = F32_toInt( shift );
 	} 
 
 
@@ -76,19 +76,19 @@ void updateScroll(VDPPlane plane, const TileMap *tilemap, int index,
 	for (s16 row = 0; row < rows; ++row)
 	{
 		// Set the scrolling position of plane per row
-		planeOffset[row] = fix32Add(planeOffset[row], speed[row]);
+		planeOffset[row] = planeOffset[row] + speed[row];
 		if (planeOffset[row] >= FIX32(PLANE_MAX_PIXEL)) // plane in memory is 512 pixels wide
 		{
 			planeOffset[row] = FIX32(0); 
 		}
 
 		// keep track of where we are in the image per row
-		imageOffset[row] = fix32Add(imageOffset[row], speed[row]);
+		imageOffset[row] = imageOffset[row]  + speed[row];
 		if (imageOffset[row] >= FIX32(IMAGE_MAX_PIXEL)) // bg image is 1280 pixels wide
 		{
 			imageOffset[row] = FIX32(0); 
 		}
-		s16 sPlaneOffset = fix32ToInt(planeOffset[row]);
+		s16 sPlaneOffset = F32_toInt(planeOffset[row]);
 		// check if we need a new tile
 		if (sPlaneOffset % 8 == 0)
 		{
@@ -100,7 +100,7 @@ void updateScroll(VDPPlane plane, const TileMap *tilemap, int index,
 			}
 
 			// get source column (in tiles)
-			s16 sImageOffset = fix32ToInt(imageOffset[row]);
+			s16 sImageOffset = F32_toInt(imageOffset[row]);
 			s16 srcCol = (sImageOffset + PLANE_MAX_PIXEL - 8) / 8;
 			if (srcCol >= IMAGE_MAX_TILE)
 			{
@@ -301,8 +301,8 @@ int main(bool hard)
 	fix32 truckWheelPosX1 = FIX32(55.0);
 	fix32 truckWheelPosY1 = FIX32(135.0);
 	truckWheelSprite1 = SPR_addSprite( &boss_truck_wheel,  // Sprite defined in resources
-			fix32ToInt(truckWheelPosX1),// starting X position
-			fix32ToInt(truckWheelPosY1),// starting Y position
+			F32_toInt(truckWheelPosX1),// starting X position
+			F32_toInt(truckWheelPosY1),// starting Y position
 			TILE_ATTR( PAL3,           // specify palette
 				1,        // Tile priority ( with background)
 				FALSE,        // flip the sprite vertically?
@@ -313,8 +313,8 @@ int main(bool hard)
 	fix32 truckWheelPosX2 = FIX32(186.0);
 	fix32 truckWheelPosY2 = FIX32(135.0);
 	truckWheelSprite2 = SPR_addSprite( &boss_truck_wheel,  // Sprite defined in resources
-			fix32ToInt(truckWheelPosX2),// starting X position
-			fix32ToInt(truckWheelPosY2),// starting Y position
+			F32_toInt(truckWheelPosX2),// starting X position
+			F32_toInt(truckWheelPosY2),// starting Y position
 			TILE_ATTR( PAL3,           // specify palette
 				TRUE,        // Tile priority ( with background)
 				FALSE,        // flip the sprite vertically?
@@ -326,8 +326,8 @@ int main(bool hard)
 	fix32 treePosX = FIX32(152.0);
 	fix32 treePosY = FIX32(54.0);
 	treeSprite = SPR_addSprite( &tree,  // Sprite defined in resources
-			fix32ToInt(treePosX),// starting X position
-			fix32ToInt(treePosY),// starting Y position
+			F32_toInt(treePosX),// starting X position
+			F32_toInt(treePosY),// starting Y position
 			TILE_ATTR( PAL0,           // specify palette
 				FALSE,        // Tile priority ( with background)
 				FALSE,        // flip the sprite vertically?
@@ -345,8 +345,8 @@ int main(bool hard)
 		readJoypad(JOY_1);
 
 		// sprite
-		treePosX = fix32Sub(treePosX, FIX32(2.2));
-		SPR_setPosition(treeSprite, fix32ToInt(treePosX), 54);
+		treePosX = treePosX - FIX32(2.2);
+		SPR_setPosition(treeSprite, F32_toInt(treePosX), 54);
 
 		// Fake rotation
 		currAngle += stepDir;

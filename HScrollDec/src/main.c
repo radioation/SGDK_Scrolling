@@ -28,7 +28,7 @@ s16 scrollPlane(VDPPlane plane, const TileMap *tilemap, int index, fix32 speed, 
 	*imageOffset = *imageOffset + speed;
 	if (*imageOffset >= FIX32(IMAGE_MAX_PIXEL))
 		*imageOffset = FIX32(0); // bg image is 1280 pixels wide
-	s16 sPlaneOffset = fix32ToInt(*planeOffset);
+	s16 sPlaneOffset = F32_toInt(*planeOffset);
 	// check if we need a new tile
 	if (sPlaneOffset % 8 == 0)
 	{
@@ -40,7 +40,7 @@ s16 scrollPlane(VDPPlane plane, const TileMap *tilemap, int index, fix32 speed, 
 		}
 
 		// get source column (in tiles)
-		s16 sImageOffset = fix32ToInt(*imageOffset);
+		s16 sImageOffset = F32_toInt(*imageOffset);
 		s16 srcCol = (sImageOffset + PLANE_MAX_PIXEL - 8) / 8;
 		if (srcCol >= IMAGE_MAX_TILE)
 		{
