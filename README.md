@@ -1,7 +1,7 @@
 # SGDK_Scrolling
 This repo contains code I've written while trying out different ways of scrolling with [SGDK](https://github.com/Stephane-D/SGDK).
 
-THis code has been tested with [SGDK 1.80](https://github.com/Stephane-D/SGDK/releases/tag/v1.80).  
+THis code has been compiled against [SGDK 2.11](https://github.com/Stephane-D/SGDK/releases/tag/v2.11).  
 
 ## MAP for Large Images
 The folders *ScrollingWithCamera* and *SimpleScrolling* are scrolling examples using the MAP type introduced in version [1.60](https://github.com/Stephane-D/SGDK/releases/tag/v1.60).  The code has been updated to compile with SGDK 1.80.  So you must have version 1.80 on your system to use this code.
