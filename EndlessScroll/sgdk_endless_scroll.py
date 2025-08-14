@@ -9,6 +9,11 @@ import shutil
 from jinja2 import Template
 from pathlib import Path
 
+# 320 x 224  
+COLS = 320  
+rows = 224
+
+
 def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, imageWidth ):
   # make resource dir and rescomp file
   srcFolder = destDir + "/src"
@@ -113,6 +118,140 @@ def makeProjectFiles( destDir, imageFilename, endRow, startRow, nearPolyWidth, f
           image_width = imageWidth,
           ))
 
+def createImages( floorImgFilename, ceilImgFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename, imageAFilename ):
+  logging.info("WORKING ON:" + floorImgFilename);
+  print( outputFilename )
+  with Image.open( floorImgFilename ) as im:
+    inputImg = im.convert('RGB')
+    inputWidth, inputHeight = im.size
+    inputCv = np.array(inputImg)
+    transitionFilename = ''
+    warpImgs =[]
+    if len( imageAFilename ) > 0 :
+      with Image.open( imageAFilename ) as imgA:
+        inputImgA = imgA.convert('RGB')
+        tmpImgA = np.array( inputImgA )
+        transitionFilename = os.path.splitext(outputFilename)[0]
+  
+    pal = im.getpalette() # must have same palettes.
+    # get source points
+    srcTopLeft = ( 0, 0 )
+    srcTopRight = ( inputWidth-1, 0 )
+    srcBottomLeft = ( 0, inputHeight-1 ) 
+    srcBottomRight = ( inputWidth-1, inputHeight-1 )
+    srcPts = np.array( [ srcBottomLeft, srcBottomRight, srcTopRight, srcTopLeft] )    
+    logging.info("srcPts:");
+    logging.info(srcPts);
+
+    # work image
+    tmpImg = Image.new('RGB', (outputCols, rows))
+    tmpCv = np.array(tmpImg)
+    bottomLeftStart = COLS / 2 - bottomTotalWidth / 2
+    for rep in range( 0, farImageReps +1, 1 ):
+      # detination points
+      dstTopLeft = ( rep * farPolyWidth, startRow )
+      dstTopRight = ( rep * farPolyWidth + farPolyWidth-0.5, startRow )
+      dstBottomLeft = ( bottomLeftStart + rep * nearPolyWidth, endRow ) 
+      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth-0.5, endRow   )
+      dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
+      dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
+
+      logging.info("rep %d dstPts:" % ( rep ) );
+      logging.info(dstPts);
+
+      gridTopLeft = ( max( min( dstTopLeft[0] // 8, dstBottomLeft[0]//8), 0 ) , dstTopLeft[1]//8 )
+      gridBottomRight = ( min( max( dstBottomRight[0] // 8, dstTopRight[0]//8), (outputCols//8) -1 ) , dstBottomRight[1]//8 )
+      logging.info(gridTopLeft);
+      logging.info(gridBottomRight);
+      # Get Perspective Transform Algorithm
+      srcPtsList = np.float32( srcPts.tolist() )
+      dstPtsList = np.float32( dstPts.tolist() )
+      xfrmMatrix = cv2.getPerspectiveTransform(srcPtsList, dstPtsList)
+
+      # warp it
+      image_size = (tmpCv.shape[1], tmpCv.shape[0])
+      warpCv = cv2.warpPerspective(inputCv, xfrmMatrix, dsize=image_size)
+      warpImg = Image.fromarray( warpCv )
+      if args.output_warped_images:
+        warpImg.save( "warped_floor_%d.png" %(rep) )
+
+
+      ## create a copy mask 
+      maskCv = np.zeros_like(tmpCv)
+      maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
+      maskCv = maskCv.all(axis=2)
+      # copy warped image
+      tmpCv[maskCv, :] = warpCv[maskCv, :]
+      warpImgs.append( ( maskCv, warpCv[maskCv, :], gridTopLeft, gridBottomRight ) ) 
+
+    if len(transitionFilename) > 0:
+      for rep in range( farImageReps , -1, -1 ):
+        tmpImgA[warpImgs[rep][0], :] = warpImgs[rep][1]
+        maskImgA = Image.fromarray( tmpImgA )
+        ImageDraw.floodfill( maskImgA, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
+        outImgA = maskImgA.quantize( palette = im )
+        outImgA.save( "%s_%d.png" %(transitionFilename, rep ) )
+        # Get sub region and save it too
+        cropped = outImgA.crop( ( warpImgs[rep][2][0]*8, warpImgs[rep][2][1]*8, warpImgs[rep][3][0]*8+8, warpImgs[rep][3][1]*8+8 ) )
+        cropped.save( "%s_%d-%d_%d_%d_%d.png" %(transitionFilename, rep,  warpImgs[rep][2][0],  warpImgs[rep][2][1],  warpImgs[rep][3][0],  warpImgs[rep][3][1] ) )
+
+
+
+    # check if ceilng was set.
+    if startCeilingRow >= 0 and endCeilingRow > 0:
+      ceilFilename = ceilImgFilename if len(ceilImgFilename) > 0 else floorImgFilename
+      with Image.open( ceilFilename ) as ceil:
+        inputCeilingImg = ceil.convert('RGB')
+        inputWidth, inputHeight = ceil.size
+        inputCeilingCv = np.array(inputCeilingImg)
+        # assume old pal
+        # get source points
+        srcTopLeft = ( 0, 0 )
+        srcTopRight = ( inputWidth-1, 0 )
+        srcBottomLeft = ( 0, inputHeight-1 ) 
+        srcBottomRight = ( inputWidth-1, inputHeight-1 )
+        srcPts = np.array( [ srcBottomLeft, srcBottomRight, srcTopRight, srcTopLeft] )    
+        logging.info("srcPts:");
+        logging.info(srcPts);
+        topLeftStart = COLS / 2 - bottomTotalWidth / 2
+        for rep in range( 0, farImageReps +1, 1 ):
+          # detination points
+          dstTopLeft = ( topLeftStart + rep * nearPolyWidth, startCeilingRow )
+          dstTopRight = ( topLeftStart + rep * nearPolyWidth + nearPolyWidth,  startCeilingRow )
+          dstBottomLeft = (  rep * farPolyWidth, endCeilingRow  ) 
+          dstBottomRight = (  rep * farPolyWidth + farPolyWidth, endCeilingRow   )
+          dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
+          logging.info("dstPts:");
+          logging.info(dstPts);
+          dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
+          # Get Perspective Transform Algorithm
+          srcPtsList = np.float32( srcPts.tolist() )
+          dstPtsList = np.float32( dstPts.tolist() )
+          xfrmMatrix = cv2.getPerspectiveTransform(srcPtsList, dstPtsList)
+          
+          # warp it
+          image_size = (tmpCv.shape[1], tmpCv.shape[0])
+          warpCv = cv2.warpPerspective(inputCeilingCv, xfrmMatrix, dsize=image_size)
+          warpImg = Image.fromarray( warpCv )
+          if args.output_warped_images:
+            warpImg.save( "warped_ceil_%d.png" %(rep) )
+            
+          ## create a copy mask 
+          maskCv = np.zeros_like(tmpCv)
+          maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
+          maskCv = maskCv.all(axis=2)
+          # copy warped image
+          tmpCv[maskCv, :] = warpCv[maskCv, :]
+
+    
+    # convert backto PIL 
+    maskImg = Image.fromarray( tmpCv )
+    ImageDraw.floodfill( maskImg, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
+    ##maskImg.save( "mask.png")
+    outImg = maskImg.quantize( palette = im )
+    #outImg = Image.new('P', (outputCols, rows))
+    #outImg.putpalette(pal)
+    outImg.save( outputFilename )
 
 def main(args, loglevel):
   logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
@@ -144,17 +283,32 @@ def main(args, loglevel):
     return
 
 
-  imageFilename =  args.input_filename
+  imageFilename = 'image.png'
+  imageFilenameB = ''
+  if len(args.input_filename) > 0 :
+    imageFilename =  args.input_filename[0]
+    if len(args.input_filename) > 1 :
+      imageFilenameB =  args.input_filename[1]
 
-  imageCeilingFilename =  args.input_ceiling_filename
 
-  outputFilename =  args.output_filename
+  imageCeilingFilename = ''
+  imageCeilingFilenameB = ''
+  if len(args.input_ceiling_filename) > 0 :
+    imageCeilingFilename =  args.input_ceiling_filename[0]
+    if len(args.input_ceiling_filename) > 1 :
+      imageCeilingFilenameB =  args.input_ceiling_filename[1]
+
+  outputFilename = 'bg.png'
+  outputFilenameB = ''
+  if len(args.output_filename) > 0 :
+    outputFilename =  args.output_filename[0]
+    if len(args.output_filename) > 1 :
+      outputFilenameB =  args.output_filename[1]
+
+
 
   projectDir =  args.project_directory
 
-  # 320 x 224  
-  COLS = 320  
-  rows = 224
 
   farPolyWidth = COLS / farImageReps
   nearPolyWidth = COLS / nearImageReps
@@ -192,113 +346,16 @@ def main(args, loglevel):
 
   print("Image size %d x %d" % ( outputCols,rows ) )
 
-  with Image.open( imageFilename ) as im:
-    inputImg = im.convert('RGB')
-    inputWidth, inputHeight = im.size
-    inputCv = np.array(inputImg)
+  createImages( imageFilename, imageCeilingFilename, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilename, '' )
 
-    pal = im.getpalette()
-    # get source points
-    srcTopLeft = ( 0, 0 )
-    srcTopRight = ( inputWidth-1, 0 )
-    srcBottomLeft = ( 0, inputHeight-1 ) 
-    srcBottomRight = ( inputWidth-1, inputHeight-1 )
-    srcPts = np.array( [ srcBottomLeft, srcBottomRight, srcTopRight, srcTopLeft] )    
-    logging.info("srcPts:");
-    logging.info(srcPts);
+  if imageFilenameB:
+    print("DO SECOND IMAGE")
+    print(imageFilenameB)
+    createImages( imageFilenameB, imageCeilingFilenameB, rows, outputCols, bottomTotalWidth, farImageReps, farPolyWidth, nearPolyWidth, startRow, endRow, startCeilingRow, endCeilingRow, outputFilenameB, outputFilename )
 
-    # work image
-    tmpImg = Image.new('RGB', (outputCols, rows))
-    tmpCv = np.array(tmpImg)
-    bottomLeftStart = COLS / 2 - bottomTotalWidth / 2
-    for rep in range( 0, farImageReps +1, 1 ):
-      # detination points
-      dstTopLeft = ( rep * farPolyWidth, startRow )
-      dstTopRight = ( rep * farPolyWidth + farPolyWidth-0.5, startRow )
-      dstBottomLeft = ( bottomLeftStart + rep * nearPolyWidth, endRow ) 
-      dstBottomRight = ( bottomLeftStart + rep * nearPolyWidth + nearPolyWidth-0.5, endRow   )
-      dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
-      dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
-      logging.info("dstPts:");
-      logging.info(dstPts);
 
-      # Get Perspective Transform Algorithm
-      srcPtsList = np.float32( srcPts.tolist() )
-      dstPtsList = np.float32( dstPts.tolist() )
-      xfrmMatrix = cv2.getPerspectiveTransform(srcPtsList, dstPtsList)
-
-      # warp it
-      image_size = (tmpCv.shape[1], tmpCv.shape[0])
-      warpCv = cv2.warpPerspective(inputCv, xfrmMatrix, dsize=image_size)
-      warpImg = Image.fromarray( warpCv )
-      if args.output_warped_images:
-        warpImg.save( "warped_floor_%d.png" %(rep) )
-
-      ## create a copy mask 
-      maskCv = np.zeros_like(tmpCv)
-      maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
-      maskCv = maskCv.all(axis=2)
-      # copy warped image
-      tmpCv[maskCv, :] = warpCv[maskCv, :]
-   
-    # check if ceilng was set.
-    if startCeilingRow >= 0 and endCeilingRow > 0:
-      ceilFilename = imageCeilingFilename if len(imageCeilingFilename) > 0 else imageFilename
-      with Image.open( ceilFilename ) as ceil:
-        inputCeilingImg = ceil.convert('RGB')
-        inputWidth, inputHeight = ceil.size
-        inputCeilingCv = np.array(inputCeilingImg)
-        # assume old pal
-        # get source points
-        srcTopLeft = ( 0, 0 )
-        srcTopRight = ( inputWidth-1, 0 )
-        srcBottomLeft = ( 0, inputHeight-1 ) 
-        srcBottomRight = ( inputWidth-1, inputHeight-1 )
-        srcPts = np.array( [ srcBottomLeft, srcBottomRight, srcTopRight, srcTopLeft] )    
-        logging.info("srcPts:");
-        logging.info(srcPts);
-        topLeftStart = COLS / 2 - bottomTotalWidth / 2
-        for rep in range( 0, farImageReps +1, 1 ):
-          # detination points
-          dstTopLeft = ( topLeftStart + rep * nearPolyWidth, startCeilingRow )
-          dstTopRight = ( topLeftStart + rep * nearPolyWidth + nearPolyWidth,  startCeilingRow )
-          dstBottomLeft = (  rep * farPolyWidth, endCeilingRow  ) 
-          dstBottomRight = (  rep * farPolyWidth + farPolyWidth, endCeilingRow   )
-          dstPts = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft] )    
-          logging.info("dstPts:");
-          logging.info(dstPts);
-          dstPoly = np.array( [ dstBottomLeft, dstBottomRight, dstTopRight, dstTopLeft], dtype=np.int32 )
-          # Get Perspective Transform Algorithm
-          srcPtsList = np.float32( srcPts.tolist() )
-          dstPtsList = np.float32( dstPts.tolist() )
-          xfrmMatrix = cv2.getPerspectiveTransform(srcPtsList, dstPtsList)
-          
-          # warp it
-          image_size = (tmpCv.shape[1], tmpCv.shape[0])
-          warpCv = cv2.warpPerspective(inputCeilingCv, xfrmMatrix, dsize=image_size)
-          warpImg = Image.fromarray( warpCv )
-          if args.output_warped_images:
-            warpImg.save( "warped_ceil_%d.png" %(rep) )
-          
-          ## create a copy mask 
-          maskCv = np.zeros_like(tmpCv)
-          maskCv = cv2.fillPoly(maskCv, pts = [dstPoly], color = (255, 255, 255) )
-          maskCv = maskCv.all(axis=2)
-          # copy warped image
-          tmpCv[maskCv, :] = warpCv[maskCv, :]
-
-    
-    # convert backto PIL 
-    maskImg = Image.fromarray( tmpCv )
-    ImageDraw.floodfill( maskImg, ( outputCols-1, rows/2), ( pal[0], pal[1], pal[2]) )
-    ##maskImg.save( "mask.png")
-    outImg = maskImg.quantize( palette = im )
-    #outImg = Image.new('P', (outputCols, rows))
-    #outImg.putpalette(pal)
-    outImg.save( outputFilename )
-
-    if len(projectDir) > 0 :
-      makeProjectFiles( projectDir, outputFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, outputCols )
+  if len(projectDir) > 0 :
+    makeProjectFiles( projectDir, outputFilename, endRow, startRow, nearPolyWidth, farPolyWidth, endCeilingRow, startCeilingRow, outputCols )
 
 # the program.
 if __name__ == '__main__':
@@ -345,9 +402,12 @@ if __name__ == '__main__':
 
   parser.add_argument( "-i",
       "--input_filename",
-      default = 'image.png',
+      action = 'append',
+      default = [],
       help = "input image filename",
       metavar = "ARG")
+
+
 
   parser.add_argument( "-S",
       "--start_ceiling_row",
@@ -365,13 +425,14 @@ if __name__ == '__main__':
 
   parser.add_argument( "-I",
       "--input_ceiling_filename",
-      default = '',
+      default = [],
       help = "input ceiling image filename",
       metavar = "ARG")
 
   parser.add_argument( "-o",
       "--output_filename",
-      default = 'bg.png',
+      action = 'append',
+      default = [],
       help = "Output filename",
       metavar = "ARG")
 

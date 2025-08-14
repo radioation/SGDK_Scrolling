@@ -29,7 +29,7 @@ int main(bool hard) {
   fix16 amplitude = FIX16( 10.0 );  // Amplitude sets how big the waves are.
   s16 offset = -40;  // shift left a bit.
   for( u16 i = 0; i < TOTAL_LINES; ++i ) {
-    hScroll[i] = fix16ToInt( fix16Mul(  sinFix16(i * sinPerLine ), amplitude ) ) + offset;
+    hScroll[i] = F16_toInt( F16_mul(  sinFix16(i * sinPerLine ), amplitude ) ) + offset;
   }
 
 
@@ -79,7 +79,7 @@ int main(bool hard) {
     sinOffset++; // move up in the sine table
     for( u16 i = 0; i < TOTAL_LINES; ++i ) {
         // compute horizontal offsets with sine table.
-        hScroll[i] = fix16ToInt( fix16Mul(  sinFix16(( i + sinOffset ) * sinPerLine ), amplitude ) ) + offset;
+        hScroll[i] = F16_toInt( F16_mul(  sinFix16(( i + sinOffset ) * sinPerLine ), amplitude ) ) + offset;
     }
 
     // apply scrolling offsets 

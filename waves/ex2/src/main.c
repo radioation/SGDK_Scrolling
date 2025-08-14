@@ -24,8 +24,8 @@ void createBubbles() {
     bubbles[i].pos_y =  random() % ( 224 - 32);
     bubbles[i].vel_y =  random() % ( 4) + 1;
     bubbles[i].sinPerLine =  random() % 5 + 5;
-    bubbles[i].amplitude = intToFix16( random() % 7 + 10 ); 
-    bubbles[i].sprite = SPR_addSprite( &bubble, fix16ToInt( bubbles[i].pos_x),  bubbles[i].pos_y, TILE_ATTR( PAL1, 0, FALSE, FALSE));
+    bubbles[i].amplitude = FIX16( random() % 7 + 10 ); 
+    bubbles[i].sprite = SPR_addSprite( &bubble, F16_toInt( bubbles[i].pos_x),  bubbles[i].pos_y, TILE_ATTR( PAL1, 0, FALSE, FALSE));
   }
 }
 
@@ -35,7 +35,7 @@ void updateBubbles() {
     if( bubbles[i].pos_y < -32 ) {
       bubbles[i].pos_y = 224;
     }
-    s16 x = fix16ToInt( fix16Mul(  sinFix16( bubbles[i].pos_y * bubbles[i].sinPerLine ), bubbles[i].amplitude ) ) + bubbles[i].pos_x;
+    s16 x = F16_toInt( F16_mul(  sinFix16( bubbles[i].pos_y * bubbles[i].sinPerLine ), bubbles[i].amplitude ) ) + bubbles[i].pos_x;
     SPR_setPosition( bubbles[i].sprite, x, bubbles[i].pos_y);
   }
 
@@ -97,16 +97,16 @@ int main(bool hard) {
       if ( offsetA > 0 ) {
         offsetA = 0;
       } else {
-        fOffsetB = fix16Add(fOffsetB, FIX16(0.75));
-        offsetB = fix16ToInt( fOffsetB );
+        fOffsetB = fOffsetB + FIX16(0.75);
+        offsetB = F16_toInt( fOffsetB );
       }
     } else if( joypad & BUTTON_RIGHT ) {
       offsetA -=2;
       if ( offsetA < -158 ) {
         offsetA = -158;
       } else {
-        fOffsetB = fix16Sub(fOffsetB, FIX16(0.75));
-        offsetB = fix16ToInt( fOffsetB );
+        fOffsetB = fOffsetB - FIX16(0.75);
+        offsetB = F16_toInt( fOffsetB );
       }
     }
 
@@ -118,7 +118,7 @@ int main(bool hard) {
     sinOffset++; // move up in the sine table
     for( u16 i = 0; i < TOTAL_LINES; ++i ) {
       // compute horizontal offsets with sine table.
-      hScrollB[i] = fix16ToInt( fix16Mul(  sinFix16(( i + sinOffset ) * sinPerLine ), amplitude ) ) + offsetB;
+      hScrollB[i] = F16_toInt( F16_mul(  sinFix16(( i + sinOffset ) * sinPerLine ), amplitude ) ) + offsetB;
       hScrollA[i] = offsetA;
     }
 

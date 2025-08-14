@@ -34,7 +34,7 @@ int main(bool hard) {
     // scroll the sky
     offsetPlaneSky = offsetPlaneSky - FIX16(0.05);
     for (u16 i = 0; i <FAR; i ++) {
-      hScroll[i] = fix16ToInt(offsetPlaneSky);
+      hScroll[i] = F16_toInt(offsetPlaneSky);
     }
 
     // scroll the land.  
@@ -44,7 +44,7 @@ int main(bool hard) {
       // increase the amount we scroll as we get closer to the bottom of the screen.
       offset = offset + delta;
       landOffsets[i-FAR] = landOffsets[i-FAR] - offset;
-      hScroll[i] = fix16ToInt(landOffsets[i-FAR]);
+      hScroll[i] = F16_toInt(landOffsets[i-FAR]);
     }
 
     VDP_setHorizontalScrollLine (BG_B, 0, hScroll, 223, CPU);

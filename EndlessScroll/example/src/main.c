@@ -13,8 +13,8 @@ static scrollLeftLoop()
   {
     for (u16 row = 180; row < 224; ++row)
     {
-      fscroll[row] = fix32Sub(fscroll[row], fStep);
-      fStep = fix32Add(fStep, FIX32(0.0233));
+      fscroll[row] = fscroll[row] - fStep;
+      fStep = fStep - FIX32(0.0233);
     }
   }
   else
@@ -32,8 +32,8 @@ static scrollRightLoop()
   {
     for (u16 row = 180; row < 224; ++row)
     {
-      fscroll[row] = fix32Add(fscroll[row], fStep);
-      fStep = fix32Add(fStep, FIX32(0.0233));
+      fscroll[row] = fscroll[row] + fStep;
+      fStep = fStep + FIX32(0.0233);
     }
   }
   else
@@ -43,7 +43,7 @@ static scrollRightLoop()
     for (u16 row = 180; row < 224; ++row)
     {
       fscroll[row] = scroll;
-      scroll = fix32Sub(scroll, FIX32(1.8605));
+      scroll = scroll - FIX32(1.8605);
     }
   }
 }
@@ -71,7 +71,7 @@ int main(bool hard)
     //scrollLeftLoop();
     for (int i = 0; i < 224; i++) // Not very efficient.
     {
-      hScrollB[i] = fix32ToInt(fscroll[i]);
+      hScrollB[i] = F32_toInt(fscroll[i]);
     }
     VDP_setHorizontalScrollLine(BG_B, 0, hScrollB, 224, DMA);
     SYS_doVBlankProcess();

@@ -115,8 +115,8 @@ on.
   ++scrollStep;
   fix32 fStep = FIX32(1.0);
   for( u16 row=180; row<224; ++row ) {
-    fscroll[row] = fix32Sub( fscroll[row], fStep ); // shift row left
-    fStep = fix32Add( fStep, FIX32(0.0233));        // change shift by 0.0233 pixels
+    fscroll[row] = fscroll[row] - fStep; // shift row left
+    fStep =  fStep + FIX32(0.0233);        // change shift by 0.0233 pixels
   }
 ```
 This works up to 80 pixels for the top row.  This is because the output image
@@ -133,8 +133,8 @@ static scrollLeftLoop() {
   fix32 fStep = FIX32(1.0);
   if (scrollStep < 80) {
     for( u16 row=180; row<224; ++row ) {
-      fscroll[row] = fix32Sub( fscroll[row], fStep );
-      fStep = fix32Add( fStep, FIX32(0.0233));
+      fscroll[row] =  fscroll[row] - fStep;
+      fStep =  fStep + FIX32(0.0233);
     }
   } else {
     scrollStep = 0;
@@ -151,8 +151,8 @@ pixel, row 81 right by 1.0233 pixels, row 81 by 1.0466, pixels, etc.
   fix32 fStep = FIX32(1.0);
   for (u16 row = 180; row < 224; ++row)
   {
-    fscroll[row] = fix32Add(fscroll[row], fStep);
-    fStep = fix32Add(fStep, FIX32(0.0233));
+    fscroll[row] = fscroll[row] + fStep;
+    fStep = fStep + FIX32(0.0233);
   }
 ```
 Again, this only works up to 80 pixels for the top row.  Resetting the scroll
@@ -168,7 +168,7 @@ value output from the script.  In this case:
     for (u16 row = 180; row < 224; ++row)
     {
       fscroll[row] = scroll;
-      scroll = fix32Sub(scroll, FIX32(1.8605)); // decrement by final value
+      scroll = scroll - FIX32(1.8605); // decrement by final value
     }
 ```
 Put together:
@@ -181,8 +181,8 @@ static scrollRightLoop()
   {
     for (u16 row = 180; row < 224; ++row)
     {
-      fscroll[row] = fix32Add(fscroll[row], fStep);
-      fStep = fix32Add(fStep, FIX32(0.0233));
+      fscroll[row] = fscroll[row] + fStep;
+      fStep = fStep + FIX32(0.0233);
     }
   }
   else
@@ -192,7 +192,7 @@ static scrollRightLoop()
     for (u16 row = 180; row < 224; ++row)
     {
       fscroll[row] = scroll;
-      scroll = fix32Sub(scroll, FIX32(1.8605));
+      scroll = scroll - FIX32(1.8605);
     }
   }
 }

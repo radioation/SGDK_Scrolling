@@ -72,7 +72,7 @@ static void addExplosion(  fix32 pos_x, fix32 pos_y ) {
     explosions[nextExplosion].active = TRUE;
     explosions[nextExplosion].ticks = 0;
     SPR_setVisibility( explosions[nextExplosion].sprite, VISIBLE);
-    SPR_setPosition( explosions[nextExplosion].sprite,fix32ToInt(explosions[nextExplosion].pos_x),fix32ToInt(explosions[nextExplosion].pos_y));
+    SPR_setPosition( explosions[nextExplosion].sprite,F32_toInt(explosions[nextExplosion].pos_x),F32_toInt(explosions[nextExplosion].pos_y));
 
     // update current explosion index for next request
     ++nextExplosion;
@@ -86,8 +86,8 @@ static void addExplosion(  fix32 pos_x, fix32 pos_y ) {
 
 static void updateCameraPos() {
 	// figure out where the player is.  
-	s32 px = fix32ToInt( player.pos_x );
-	s32 py = fix32ToInt( player.pos_y );
+	s32 px = F32_toInt( player.pos_x );
+	s32 py = F32_toInt( player.pos_y );
 
 	s32 playerScreenX = px - camPosX;
 	s32 playerScreenY = py - camPosY;
@@ -141,11 +141,11 @@ static void inputCallback( u16 joy, u16 changed, u16 state ) {
 			if( playerShots[i].active == FALSE ) {
 				// create a new one
 
-				u16 rot = fix32ToInt( playerRotation);
-				playerShots[i].pos_x = player.pos_x + FIX32((PLAYER_WIDTH-PLAYER_SHOT_WIDTH)/2) +  fix32Mul( deltaX[rot], FIX32(2.0));
-				playerShots[i].pos_y = player.pos_y + FIX32((PLAYER_HEIGHT-PLAYER_SHOT_WIDTH)/2) +  fix32Mul( deltaY[rot], FIX32(2.0));
-				playerShots[i].vel_x = fix32Mul( deltaX[rot], FIX32(2.0));
-				playerShots[i].vel_y = fix32Mul( deltaY[rot], FIX32(2.0));
+				u16 rot = F32_toInt( playerRotation);
+				playerShots[i].pos_x = player.pos_x + FIX32((PLAYER_WIDTH-PLAYER_SHOT_WIDTH)/2) +  F32_mul( deltaX[rot], FIX32(2.0));
+				playerShots[i].pos_y = player.pos_y + FIX32((PLAYER_HEIGHT-PLAYER_SHOT_WIDTH)/2) +  F32_mul( deltaY[rot], FIX32(2.0));
+				playerShots[i].vel_x = F32_mul( deltaX[rot], FIX32(2.0));
+				playerShots[i].vel_y = F32_mul( deltaY[rot], FIX32(2.0));
 				playerShots[i].active = TRUE;
 				playerShots[i].ticks = 0;
 				break;
@@ -164,14 +164,14 @@ static void handleInput() {
 		if( playerRotation > MAX_ROTATION_INDEX ) {
 			playerRotation = MIN_ROTATION_INDEX;
 		}
-		int rot = fix32ToInt( playerRotation);
+		int rot = F32_toInt( playerRotation);
 		SPR_setAnim( player.sprite, rot);
 	} else if( value & BUTTON_RIGHT ) {
 		playerRotation -= FIX32( 0.25 );
 		if( playerRotation < MIN_ROTATION_INDEX ) {
 			playerRotation = MAX_ROTATION_INDEX;
 		}
-		int rot = fix32ToInt( playerRotation);
+		int rot = F32_toInt( playerRotation);
 		SPR_setAnim( player.sprite, rot);
 	}
 
@@ -188,7 +188,7 @@ static void handleInput() {
 static void update() {
 	// update player
 	if( updatePlayerPosition == TRUE ) {
-		int rot = fix32ToInt( playerRotation);
+		int rot = F32_toInt( playerRotation);
 		player.pos_x = player.pos_x + deltaX[rot];
 		player.pos_y = player.pos_y + deltaY[rot];
 
@@ -214,11 +214,11 @@ static void update() {
 		if( playerShots[i].active == TRUE ) {
 			playerShots[i].pos_x +=  playerShots[i].vel_x;
 			playerShots[i].pos_y +=  playerShots[i].vel_y;
-			s32 x = fix32ToInt(playerShots[i].pos_x) - camPosX;	
-			s32 y = fix32ToInt(playerShots[i].pos_y) - camPosY;	
+			s32 x = F32_toInt(playerShots[i].pos_x) - camPosX;	
+			s32 y = F32_toInt(playerShots[i].pos_y) - camPosY;	
 			if( x >= 0 && x < SCR_WIDTH && y >= 0 && y < SCR_HEIGHT ) {
 				SPR_setVisibility( playerShots[i].sprite, VISIBLE);
-				SPR_setPosition(playerShots[i].sprite, fix32ToInt(playerShots[i].pos_x) - camPosX, fix32ToInt(playerShots[i].pos_y) - camPosY );
+				SPR_setPosition(playerShots[i].sprite, F32_toInt(playerShots[i].pos_x) - camPosX, F32_toInt(playerShots[i].pos_y) - camPosY );
 			} else {
 				// shot reached the screen edge, deactivate and hide it.
 				playerShots[i].active = FALSE;
@@ -245,11 +245,11 @@ static void update() {
 			else if( rocks[i].pos_y >FIX32(MAP_HEIGHT)  ) { rocks[i].pos_y = FIX32(-32);} 
 
 			// only show rock if it's visible.
-			s32 x = fix32ToInt(rocks[i].pos_x) - camPosX;	
-			s32 y = fix32ToInt(rocks[i].pos_y) - camPosY;	
+			s32 x = F32_toInt(rocks[i].pos_x) - camPosX;	
+			s32 y = F32_toInt(rocks[i].pos_y) - camPosY;	
 			if( x >= -32 && x < SCR_WIDTH && y >= -32 && y < SCR_HEIGHT ) {
 				SPR_setVisibility( rocks[i].sprite, VISIBLE);
-				SPR_setPosition(rocks[i].sprite, fix32ToInt(rocks[i].pos_x) - camPosX, fix32ToInt(rocks[i].pos_y) - camPosY );
+				SPR_setPosition(rocks[i].sprite, F32_toInt(rocks[i].pos_x) - camPosX, F32_toInt(rocks[i].pos_y) - camPosY );
 			} else {
 				// shot reached the screen edge, hide it.
 				SPR_setVisibility( rocks[i].sprite, HIDDEN);
@@ -265,7 +265,7 @@ static void update() {
       explosions[i].ticks += 1;
       if( explosions[i].ticks < 9 ) {
       //  SPR_setFrame( explosions[i].sprite, explosions[i].ticks );
-				SPR_setPosition(explosions[i].sprite, fix32ToInt(explosions[i].pos_x) - camPosX, fix32ToInt(explosions[i].pos_y) - camPosY );
+				SPR_setPosition(explosions[i].sprite, F32_toInt(explosions[i].pos_x) - camPosX, F32_toInt(explosions[i].pos_y) - camPosY );
         SPR_setAnimAndFrame( explosions[i].sprite, i%4, explosions[i].ticks );
       }
       else {
@@ -276,7 +276,7 @@ static void update() {
 
   }
 	// set the player position.
-	SPR_setPosition( player.sprite, fix32ToInt( player.pos_x) - camPosX, fix32ToInt( player.pos_y ) - camPosY );
+	SPR_setPosition( player.sprite, F32_toInt( player.pos_x) - camPosX, F32_toInt( player.pos_y ) - camPosY );
 
 	// change position of the MAP
 	updateCameraPos();
@@ -353,8 +353,8 @@ static void createRocks() {
 		// use ranodm direction for rock motion
 		u16 rot = random() % 16; 
 		fix32 vel = FIX32(0.8);
-		rocks[i].vel_x = fix32Mul( vel, deltaX[rot]  );
-		rocks[i].vel_y = fix32Mul( vel, deltaY[rot]  );
+		rocks[i].vel_x = F32_mul( vel, deltaX[rot]  );
+		rocks[i].vel_y = F32_mul( vel, deltaY[rot]  );
 		rocks[i].active = TRUE;
 		rocks[i].hitbox_x1 = FIX32(2);
 		rocks[i].hitbox_y1 = FIX32(2);
@@ -382,7 +382,7 @@ static void createExplosions() {
     explosions[i].hitbox_x2 = FIX32(0);
     explosions[i].hitbox_y2 = FIX32(0);
 
-    explosions[i].sprite = SPR_addSprite( &explosion, fix32ToInt(xpos), fix32ToInt(ypos), TILE_ATTR( PAL0, 0, FALSE, FALSE ));
+    explosions[i].sprite = SPR_addSprite( &explosion, F32_toInt(xpos), F32_toInt(ypos), TILE_ATTR( PAL0, 0, FALSE, FALSE ));
     SPR_setAnim( explosions[i].sprite, i % 4 );
 
     SPR_setVisibility( explosions[i].sprite, HIDDEN );
@@ -422,13 +422,13 @@ int main( bool hard ) {
 	// Setup the player sprite
 	player.pos_x = FIX32( MAP_WIDTH/2 - 12 );
 	player.pos_y = FIX32( MAP_HEIGHT/2 - 12 );
-	player.sprite = SPR_addSprite( &ship, fix32ToInt(player.pos_x) - camPosX, fix32ToInt(player.pos_y) - camPosY, TILE_ATTR(PAL2, 0, FALSE, FALSE ));
+	player.sprite = SPR_addSprite( &ship, F32_toInt(player.pos_x) - camPosX, F32_toInt(player.pos_y) - camPosY, TILE_ATTR(PAL2, 0, FALSE, FALSE ));
   player.hitbox_x1 = FIX32(5);
   player.hitbox_y1 = FIX32(5);
   player.hitbox_x2 = FIX32(19);
   player.hitbox_y2 = FIX32(19);
 	playerRotation = MIN_ROTATION_INDEX;
-	SPR_setAnim( player.sprite, fix32ToInt(playerRotation ) );
+	SPR_setAnim( player.sprite, F32_toInt(playerRotation ) );
 
 
 	// setup player motion offset.
